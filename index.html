@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SHADOW MARKET | Solo Leveling Store</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --mana-blue: #00d4ff;
+            --mana-purple: #9d00ff;
+            --shadow-black: #050505;
+        }
+
+        body {
+            background-color: var(--shadow-black);
+            color: white;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .mana-glow {
+            text-shadow: 0 0 10px var(--mana-blue), 0 0 20px var(--mana-blue);
+        }
+
+        .mana-border {
+            border: 1px solid var(--mana-blue);
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .vortex-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--shadow-black);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--mana-blue);
+            border-radius: 10px;
+        }
+
+        .btn-shadow {
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .btn-shadow::before {
+            content: '';
+            position: absolute;
+            top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
+            transition: 0.5s;
+        }
+        .btn-shadow:hover::before {
+            left: 100%;
+        }
+
+        #admin-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.95);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(20px);
+        }
+
+        .system-message {
+            border-left: 4px solid var(--mana-blue);
+            background: rgba(0, 212, 255, 0.1);
+            padding: 1rem;
+            margin: 1rem 0;
+            animation: slideIn 0.5s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(-100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div id="vortex-canvas" class="vortex-container"></div>
+
+    <!-- Admin Prompt Overlay -->
+    <div id="admin-overlay">
+        <div class="glass p-8 rounded-lg max-w-md w-full text-center mana-border">
+            <h2 class="text-2xl font-bold mb-4 font-orbitron mana-glow">SYSTEM ACCESS</h2>
+            <p class="text-gray-400 mb-6">Enter authentication code to awaken administrator privileges.</p>
+            <input type="password" id="admin-code" class="w-full bg-black/50 border border-mana-blue/50 p-3 rounded mb-4 focus:outline-none focus:border-mana-blue text-center tracking-widest" placeholder="••••••••">
+            <div id="admin-timer" class="text-mana-blue font-bold mb-4 text-xl">25</div>
+            <div class="flex gap-4">
+                <button onclick="checkAdmin()" class="flex-1 bg-mana-blue/20 hover:bg-mana-blue/40 border border-mana-blue p-2 rounded transition font-bold">VERIFY</button>
+                <button onclick="closeAdminPrompt()" class="flex-1 bg-white/5 hover:bg-white/10 p-2 rounded transition">SKIP</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div id="main-ui" class="hidden opacity-0">
+        <!-- Navigation -->
+        <nav class="fixed top-0 w-full z-50 glass border-b border-white/10 px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-mana-blue rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,212,255,0.8)]">
+                    <i data-lucide="zap" class="text-black"></i>
+                </div>
+                <h1 class="text-2xl font-black tracking-tighter font-orbitron">SHADOW<span class="text-mana-blue">MARKET</span></h1>
+            </div>
+            <div class="hidden md:flex gap-8 font-bold text-sm tracking-widest uppercase">
+                <a href="#games" class="hover:text-mana-blue transition">Games</a>
+                <a href="#apps" class="hover:text-mana-blue transition">Subscriptions</a>
+                <a href="#chat" class="hover:text-mana-blue transition">Live Chat</a>
+            </div>
+            <div id="user-rank" class="glass px-4 py-1 rounded-full border-mana-blue/50 text-mana-blue font-bold">RANK: ?</div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="pt-32 pb-20 px-6 text-center">
+            <h2 class="text-5xl md:text-8xl font-black mb-4 font-orbitron leading-none">ARISE.</h2>
+            <p class="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto mb-8 font-light italic">
+                "The shadows shall provide what the debit cards cannot."
+            </p>
+            <div class="flex flex-wrap justify-center gap-4 text-sm font-bold uppercase tracking-widest">
+                <span class="flex items-center gap-2 glass px-4 py-2 rounded-full border-mana-purple/50"><i data-lucide="map-pin" class="w-4 text-mana-purple"></i> May Pen, Clarendon</span>
+                <span class="flex items-center gap-2 glass px-4 py-2 rounded-full border-mana-blue/50"><i data-lucide="banknote" class="w-4 text-mana-blue"></i> Cash Meet-up Only</span>
+            </div>
+        </section>
+
+        <!-- Product Grid -->
+        <main class="max-w-7xl mx-auto px-6 space-y-24 pb-32">
+            <!-- Games -->
+            <section id="games">
+                <div class="flex items-center gap-4 mb-10">
+                    <h2 class="text-3xl font-orbitron font-bold">GAME CURRENCY</h2>
+                    <div class="h-px flex-1 bg-gradient-to-r from-mana-blue to-transparent"></div>
+                </div>
+                <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Games will be injected here -->
+                </div>
+            </section>
+
+            <!-- Apps -->
+            <section id="apps">
+                <div class="flex items-center gap-4 mb-10">
+                    <h2 class="text-3xl font-orbitron font-bold">APP SUBSCRIPTIONS</h2>
+                    <div class="h-px flex-1 bg-gradient-to-r from-mana-purple to-transparent"></div>
+                </div>
+                <div id="apps-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Apps will be injected here -->
+                </div>
+            </section>
+
+            <!-- Chat Section -->
+            <section id="chat" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 glass rounded-2xl overflow-hidden border-mana-blue/20 flex flex-col h-[600px]">
+                    <div class="bg-white/5 px-6 py-4 border-b border-white/10 flex justify-between items-center">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                            <span class="font-bold font-orbitron uppercase tracking-widest text-sm">System Hub</span>
+                        </div>
+                        <div id="chat-status" class="text-xs text-gray-500">Connecting to Shadows...</div>
+                    </div>
+                    <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
+                        <!-- Messages -->
+                    </div>
+                    <div class="p-4 bg-white/5 border-t border-white/10 flex gap-2">
+                        <input type="text" id="chat-input" class="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-2 focus:outline-none focus:border-mana-blue" placeholder="Type a message...">
+                        <button onclick="sendMessage()" class="bg-mana-blue text-black font-bold px-6 py-2 rounded-lg hover:bg-white transition">SEND</button>
+                    </div>
+                </div>
+
+                <!-- Admin Controls / Private DM Info -->
+                <div id="side-panel" class="glass rounded-2xl p-6 border-mana-blue/20">
+                    <div id="admin-panel" class="hidden">
+                        <h3 class="text-xl font-orbitron font-bold mb-6 text-mana-blue">COMMANDER HUB</h3>
+                        <div class="space-y-4">
+                            <div class="text-xs text-gray-500 uppercase font-bold">Active Shadows (Buyers)</div>
+                            <div id="active-buyers" class="space-y-2">
+                                <!-- Buyer list -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="buyer-info">
+                        <h3 class="text-xl font-orbitron font-bold mb-6 text-mana-blue">YOUR STATUS</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center py-2 border-b border-white/5">
+                                <span class="text-gray-400">Shadow ID</span>
+                                <span id="my-id" class="text-xs font-mono">Loading...</span>
+                            </div>
+                            <div class="flex justify-between items-center py-2 border-b border-white/5">
+                                <span class="text-gray-400">Position</span>
+                                <span class="text-mana-blue">May Pen, CLN</span>
+                            </div>
+                            <div class="pt-4">
+                                <p class="text-sm text-gray-400 leading-relaxed">
+                                    Use the chat to talk directly with the Shadow Monarch. All orders are confirmed via WhatsApp and completed in person.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Footer -->
+        <footer class="glass border-t border-white/10 py-12 text-center">
+            <p class="text-gray-500 text-sm tracking-widest">© 2024 SHADOW MARKET | POWERED BY THE ETERNAL SLUMBER</p>
+        </footer>
+    </div>
+
+    <!-- WhatsApp Floating Button -->
+    <a href="https://wa.me/16582013679" target="_blank" class="fixed bottom-8 right-8 w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition z-[60]">
+        <i data-lucide="message-circle" class="text-white w-8 h-8"></i>
+    </a>
+
+    <!-- Order Modal -->
+    <div id="order-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-6">
+        <div class="glass max-w-lg w-full rounded-2xl overflow-hidden mana-border">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h3 id="modal-title" class="text-2xl font-orbitron font-bold text-mana-blue uppercase">PLACE ORDER</h3>
+                <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
+            </div>
+            <div class="p-8 space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-400 mb-2 uppercase">Selected Package</label>
+                    <div id="modal-package-name" class="text-xl font-bold">Roblox - 800 Robux</div>
+                    <div id="modal-package-price" class="text-mana-blue text-2xl font-black mt-1">$2,000 JMD</div>
+                </div>
+                <div class="space-y-4">
+                    <input type="text" id="order-name" placeholder="YOUR NAME" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 focus:outline-none focus:border-mana-blue">
+                    <input type="text" id="order-id" placeholder="IN-GAME ID / EMAIL" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 focus:outline-none focus:border-mana-blue">
+                    <textarea id="order-notes" placeholder="ADDITIONAL NOTES (Optional)" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 focus:outline-none focus:border-mana-blue h-24"></textarea>
+                </div>
+                <button onclick="confirmOrder()" class="w-full bg-mana-blue text-black font-black py-4 rounded-xl hover:scale-[1.02] transition shadow-[0_0_20px_rgba(0,212,255,0.3)]">CONFIRM & SEND VIA WHATSAPP</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Lucide Icons
+        lucide.createIcons();
+
+        // Three.js Vortex Background
+        let scene, camera, renderer, particles, particles2;
+        let mouseX = 0, mouseY = 0;
+        const particleCount = 2000;
+
+        function initVortex() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('vortex-canvas').appendChild(renderer.domElement);
+
+            const geometry = new THREE.BufferGeometry();
+            const posArray = new Float32Array(particleCount * 3);
+            for (let i = 0; i < particleCount * 3; i++) {
+                posArray[i] = (Math.random() - 0.5) * 15;
+            }
+            geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+
+            const material = new THREE.PointsMaterial({
+                size: 0.02,
+                color: 0x00d4ff,
+                transparent: true,
+                opacity: 0.6,
+                blending: THREE.AdditiveBlending
+            });
+
+            const material2 = new THREE.PointsMaterial({
+                size: 0.015,
+                color: 0x9d00ff,
+                transparent: true,
+                opacity: 0.4,
+                blending: THREE.AdditiveBlending
+            });
+
+            particles = new THREE.Points(geometry, material);
+            particles2 = new THREE.Points(geometry, material2);
+
+            scene.add(particles);
+            scene.add(particles2);
+            camera.position.z = 5;
+
+            document.addEventListener('mousemove', (e) => {
+                mouseX = (e.clientX - window.innerWidth / 2) / 100;
+                mouseY = (e.clientY - window.innerHeight / 2) / 100;
+            });
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            particles.rotation.y += 0.002;
+            particles.rotation.x += 0.001;
+            particles2.rotation.y -= 0.001;
+            particles2.rotation.z += 0.002;
+
+            gsap.to(camera.position, {
+                x: mouseX * 0.5,
+                y: -mouseY * 0.5,
+                duration: 2,
+                ease: "power2.out"
+            });
+
+            renderer.render(scene, camera);
+        }
+
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        initVortex();
+
+        // Chat Enter Key
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') sendMessage();
+        });
+
+        // Admin Logic
+        let isAdmin = false;
+        let timeLeft = 25;
+        const timerEl = document.getElementById('admin-timer');
+        const adminInterval = setInterval(() => {
+            timeLeft--;
+            timerEl.innerText = timeLeft;
+            if (timeLeft <= 0) {
+                clearInterval(adminInterval);
+                closeAdminPrompt();
+            }
+        }, 1000);
+
+        function checkAdmin() {
+            const code = document.getElementById('admin-code').value;
+            if (code === 'TheTrueShadowMonarch') {
+                isAdmin = true;
+                clearInterval(adminInterval);
+                showMainUI();
+                document.getElementById('admin-panel').classList.remove('hidden');
+                document.getElementById('buyer-info').classList.add('hidden');
+                initPeer();
+                addSystemMessage("Administrator Privileges Awakened.");
+            } else {
+                alert("ACCESS DENIED");
+            }
+        }
+
+        function closeAdminPrompt() {
+            clearInterval(adminInterval);
+            document.getElementById('admin-overlay').style.display = 'none';
+            showMainUI();
+        }
+
+        function showMainUI() {
+            document.getElementById('admin-overlay').style.display = 'none';
+            const main = document.getElementById('main-ui');
+            main.classList.remove('hidden');
+            gsap.to(main, { opacity: 1, duration: 1, ease: "power2.out" });
+            assignRank();
+            if (!isAdmin) initPeer();
+        }
+
+        function assignRank() {
+            let rank = localStorage.getItem('shadow-rank');
+            if (!rank) {
+                const ranks = ['E', 'D', 'C', 'B', 'A', 'S'];
+                rank = ranks[Math.floor(Math.random() * ranks.length)];
+                localStorage.setItem('shadow-rank', rank);
+            }
+            document.getElementById('user-rank').innerText = `RANK: ${rank}`;
+        }
+
+        // Data and Rendering
+        const gameData = [
+            {
+                name: "Roblox",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-white"><path d="M18.826 23.357l-14.764-2.953-2.953-14.764 14.764 2.953 2.953 14.764zm-10.748-11.81l2.953 0.591 0.591 2.953-2.953-0.591-0.591-2.953zm13.813-10.438l-17.705-3.541-3.541 17.705 17.705 3.541 3.541-17.705zm-11.81 10.748l2.953 0.591 0.591 2.953-2.953-0.591-0.591-2.953z"/></svg>`,
+                color: "mana-blue",
+                packages: [
+                    { name: "800 Robux", price: "2000" },
+                    { name: "1700 Robux", price: "4000" },
+                    { name: "4500 Robux", price: "10000" },
+                    { name: "10000 Robux", price: "20000" }
+                ]
+            },
+            {
+                name: "Free Fire",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-orange-500"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>`,
+                color: "orange-500",
+                packages: [
+                    { name: "110 Diamonds", price: "300" },
+                    { name: "231 Diamonds", price: "600" },
+                    { name: "583 Diamonds", price: "1500" },
+                    { name: "1188 Diamonds", price: "3000" },
+                    { name: "2420 Diamonds", price: "6000" }
+                ]
+            },
+            {
+                name: "PUBG Mobile",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-yellow-500"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/></svg>`,
+                color: "yellow-500",
+                packages: [
+                    { name: "60 UC", price: "250" },
+                    { name: "325 UC", price: "1200" },
+                    { name: "660 UC", price: "2400" },
+                    { name: "1800 UC", price: "6000" },
+                    { name: "6000 UC", price: "18000" }
+                ]
+            },
+            {
+                name: "Blood Strike",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-red-600"><path d="M12 2L2 22h20L12 2zm0 5l6.5 13h-13L12 7z"/></svg>`,
+                color: "red-600",
+                packages: [
+                    { name: "50 Gold", price: "150" },
+                    { name: "100 Gold", price: "300" },
+                    { name: "300 Gold", price: "800" },
+                    { name: "500 Gold", price: "1200" },
+                    { name: "1000 Gold", price: "2400" }
+                ]
+            }
+        ];
+
+        const appData = [
+            {
+                name: "Spotify",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#1DB954]"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.5 17.3c-.2.3-.6.4-.9.2-2.8-1.7-6.2-2.1-10.3-1.1-.3.1-.7-.1-.8-.4s.1-.7.4-.8c4.5-1 8.3-.5 11.4 1.4.3.2.4.6.2.7zm1.5-3.3c-.3.4-.8.5-1.2.2-3.1-1.9-7.9-2.5-11.7-1.4-.5.1-.9-.2-1-.7s.2-.9.7-1c4.4-1.3 9.7-.6 13.2 1.5.4.3.5.9.2 1.4zm.1-3.4C15 8.3 8.4 8.1 4.5 9.3c-.5.2-1.1-.1-1.3-.6-.2-.5.1-1.1.6-1.3 4.5-1.4 11.8-1.1 16.3 1.5.5.3.6.9.3 1.4-.3.5-.9.6-1.4.3z"/></svg>`,
+                packages: [
+                    { name: "Student", price: "700" },
+                    { name: "Individual", price: "1200" },
+                    { name: "Duo", price: "1600" },
+                    { name: "Family", price: "2000" }
+                ]
+            },
+            {
+                name: "Apple Music",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-pink-500"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.536 15.656c-.365.176-.786.115-1.074-.153l-2.072-1.933c-.217-.202-.34-.486-.34-.783v-4.52c0-.58.47-1.05 1.05-1.05s1.05.47 1.05 1.05v3.916l1.636 1.527c.365.34.401.896.084 1.28l-.334.666z"/></svg>`,
+                packages: [
+                    { name: "Student", price: "700" },
+                    { name: "Individual", price: "1200" },
+                    { name: "Family", price: "2000" }
+                ]
+            },
+            {
+                name: "Crunchyroll",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#F47521]"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/></svg>`,
+                packages: [
+                    { name: "Fan", price: "1400" },
+                    { name: "Mega Fan", price: "1800" }
+                ]
+            },
+            {
+                name: "Amazon Prime",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#00A8E1]"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/></svg>`,
+                packages: [
+                    { name: "Monthly", price: "2500" }
+                ]
+            },
+            {
+                name: "YouTube Premium",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-red-600"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
+                packages: [
+                    { name: "Individual", price: "1500" },
+                    { name: "Family", price: "2500" }
+                ]
+            },
+            {
+                name: "YT Music",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-red-500"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 18.5c-3.59 0-6.5-2.91-6.5-6.5S8.41 5.5 12 5.5s6.5 2.91 6.5 6.5-2.91 6.5-6.5 6.5zM10 9l5 3-5 3V9z"/></svg>`,
+                packages: [
+                    { name: "Starting", price: "7 USD" },
+                    { name: "Individual", price: "1200" }
+                ]
+            },
+            {
+                name: "Apple TV+",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-gray-300"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.5 15.5h-9v-1h9v1zm0-3h-9v-1h9v1zm0-3h-9v-1h9v1z"/></svg>`,
+                packages: [
+                    { name: "Monthly", price: "1500" }
+                ]
+            },
+            {
+                name: "Disney+",
+                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#006E99]"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/></svg>`,
+                packages: [
+                    { name: "Basic", price: "1500" },
+                    { name: "Premium", price: "2400" }
+                ]
+            }
+        ];
+
+        function renderProducts() {
+            const gamesGrid = document.getElementById('games-grid');
+            gameData.forEach(game => {
+                const card = document.createElement('div');
+                card.className = 'glass rounded-2xl p-6 border-white/5 hover:border-mana-blue/50 transition-all group';
+                card.innerHTML = `
+                    <div class="w-16 h-16 mb-6 group-hover:scale-110 transition">${game.logo}</div>
+                    <h3 class="text-xl font-bold mb-4 font-orbitron">${game.name}</h3>
+                    <div class="space-y-2">
+                        ${game.packages.map(pkg => `
+                            <button onclick="openModal('${game.name}', '${pkg.name}', '${pkg.price}')" class="w-full text-left bg-white/5 hover:bg-mana-blue/20 p-3 rounded-lg flex justify-between items-center transition">
+                                <span class="text-sm font-medium text-gray-300">${pkg.name}</span>
+                                <span class="text-mana-blue font-bold">$${pkg.price}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                gamesGrid.appendChild(card);
+            });
+
+            const appsGrid = document.getElementById('apps-grid');
+            appData.forEach(app => {
+                const card = document.createElement('div');
+                card.className = 'glass rounded-2xl p-6 border-white/5 hover:border-mana-purple/50 transition-all group';
+                card.innerHTML = `
+                    <div class="w-16 h-16 mb-6 group-hover:scale-110 transition">${app.logo}</div>
+                    <h3 class="text-xl font-bold mb-4 font-orbitron">${app.name}</h3>
+                    <div class="space-y-2">
+                        ${app.packages.map(pkg => `
+                            <button onclick="openModal('${app.name}', '${pkg.name}', '${pkg.price}')" class="w-full text-left bg-white/5 hover:bg-mana-purple/20 p-3 rounded-lg flex justify-between items-center transition">
+                                <span class="text-sm font-medium text-gray-300">${pkg.name}</span>
+                                <span class="text-mana-blue font-bold">$${pkg.price}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                `;
+                appsGrid.appendChild(card);
+            });
+        }
+
+        renderProducts();
+
+        // Modal Logic
+        let currentOrder = {};
+
+        function openModal(item, pkg, price) {
+            currentOrder = { item, pkg, price };
+            document.getElementById('modal-title').innerText = `RECHARGE ${item}`;
+            document.getElementById('modal-package-name').innerText = `${item} - ${pkg}`;
+            document.getElementById('modal-package-price').innerText = `$${price} JMD`;
+            document.getElementById('order-modal').classList.remove('hidden');
+            document.getElementById('order-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('order-modal').style.display = 'none';
+        }
+
+        function confirmOrder() {
+            const name = document.getElementById('order-name').value;
+            const id = document.getElementById('order-id').value;
+            const notes = document.getElementById('order-notes').value;
+            const shadowId = peer.id;
+
+            if (!name || !id) {
+                alert("Please fill in required fields.");
+                return;
+            }
+
+            const text = `*SHADOW MARKET ORDER*%0A------------------%0A*Shadow ID:* ${shadowId}%0A*Item:* ${currentOrder.item}%0A*Package:* ${currentOrder.pkg}%0A*Price:* $${currentOrder.price} JMD%0A*Buyer Name:* ${name}%0A*In-game ID/Email:* ${id}%0A*Notes:* ${notes}%0A------------------%0A*Meet-up Location:* May Pen, Clarendon`;
+
+            window.open(`https://wa.me/16582013679?text=${text}`, '_blank');
+            closeModal();
+            addSystemMessage(`Order transmitted. Your Shadow ID (${shadowId}) is now active.`);
+        }
+
+        // PeerJS Communication
+        const ADMIN_PEER_ID = 'ShadowMonarch_Admin_7784';
+        let peer;
+        let connections = {};
+        const chatMessages = document.getElementById('chat-messages');
+        const activeBuyers = document.getElementById('active-buyers');
+
+        function initPeer() {
+            if (isAdmin) {
+                peer = new Peer(ADMIN_PEER_ID);
+            } else {
+                peer = new Peer();
+            }
+
+            peer.on('open', (id) => {
+                document.getElementById('my-id').innerText = id;
+                document.getElementById('chat-status').innerText = "System Synced";
+
+                if (!isAdmin) {
+                    const conn = peer.connect(ADMIN_PEER_ID);
+                    handleConnection(conn);
+                }
+            });
+
+            peer.on('connection', (conn) => {
+                handleConnection(conn);
+            });
+
+            peer.on('error', (err) => {
+                console.error(err);
+                if (err.type === 'unavailable-id' && isAdmin) {
+                    addSystemMessage("Admin session already active elsewhere.");
+                }
+            });
+        }
+
+        function handleConnection(conn) {
+            conn.on('data', (data) => {
+                if (data.type === 'chat') {
+                    displayMessage(isAdmin ? conn.peer : 'MONARCH', data.msg, isAdmin ? 'buyer' : 'admin');
+                }
+            });
+
+            conn.on('open', () => {
+                connections[conn.peer] = conn;
+                if (isAdmin) {
+                    registerBuyer(conn.peer);
+                    addSystemMessage(`New Shadow Connected: ${conn.peer}`);
+                    conn.send({ type: 'chat', msg: "Welcome to the Shadow Market. State your request." });
+                } else {
+                    addSystemMessage("Link established with the Shadow Monarch.");
+                }
+            });
+        }
+
+        function registerBuyer(id) {
+            if (document.getElementById(`buyer-${id}`)) return;
+            const div = document.createElement('button');
+            div.id = `buyer-${id}`;
+            div.className = 'w-full bg-white/5 p-3 rounded border border-white/10 hover:border-mana-blue text-left text-xs font-mono transition-all';
+            div.innerText = id;
+            div.onclick = () => selectBuyer(id);
+            activeBuyers.appendChild(div);
+        }
+
+        let selectedBuyerId = null;
+
+        function selectBuyer(id) {
+            selectedBuyerId = id;
+            document.querySelectorAll('#active-buyers button').forEach(b => b.classList.remove('border-mana-blue', 'bg-mana-blue/10'));
+            document.getElementById(`buyer-${id}`).classList.add('border-mana-blue', 'bg-mana-blue/10');
+            addSystemMessage(`Command Channel established with ${id}`);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value;
+            if (!msg) return;
+
+            if (isAdmin) {
+                if (selectedBuyerId && connections[selectedBuyerId]) {
+                    connections[selectedBuyerId].send({ type: 'chat', msg: msg });
+                    displayMessage('YOU', msg, 'admin');
+                } else {
+                    Object.values(connections).forEach(conn => {
+                        conn.send({ type: 'chat', msg: msg });
+                    });
+                    displayMessage('BROADCAST', msg, 'admin');
+                }
+            } else {
+                if (connections[ADMIN_PEER_ID]) {
+                    connections[ADMIN_PEER_ID].send({ type: 'chat', msg: msg });
+                    displayMessage('YOU', msg, 'buyer');
+                } else {
+                    addSystemMessage("Searching for the Monarch... (Admin offline)");
+                }
+            }
+            input.value = '';
+        }
+
+        function displayMessage(user, msg, type) {
+            const div = document.createElement('div');
+            div.className = `p-3 rounded-lg max-w-[80%] ${type === 'admin' ? 'bg-mana-blue/20 border border-mana-blue/50 ml-auto' : 'bg-white/5 border border-white/10'}`;
+            div.innerHTML = `
+                <div class="text-[10px] uppercase font-black text-mana-blue mb-1">${user}</div>
+                <div class="text-sm">${msg}</div>
+            `;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function addSystemMessage(msg) {
+            const div = document.createElement('div');
+            div.className = 'system-message text-xs font-bold uppercase tracking-widest text-mana-blue';
+            div.innerText = `[SYSTEM]: ${msg}`;
+            chatMessages.appendChild(div);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+    </script>
+</body>
+</html>
