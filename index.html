@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Nexus | Premium Game Currency & Subscriptions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        :root {
+            --mana-blue: #00d2ff;
+            --mana-purple: #9d50bb;
+            --shadow-black: #050505;
+        }
+
+        body {
+            background-color: var(--shadow-black);
+            color: #e0e0e0;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .glow-blue {
+            text-shadow: 0 0 10px var(--mana-blue), 0 0 20px var(--mana-blue);
+        }
+
+        .glow-purple {
+            text-shadow: 0 0 10px var(--mana-purple), 0 0 20px var(--mana-purple);
+        }
+
+        .border-glow {
+            border: 1px solid rgba(0, 210, 255, 0.3);
+            box-shadow: 0 0 15px rgba(0, 210, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .border-glow:hover {
+            border: 1px solid var(--mana-blue);
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.4);
+        }
+
+        .bg-shadow-gradient {
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+        }
+
+        .btn-arise {
+            background: linear-gradient(90deg, var(--mana-blue), var(--mana-purple));
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-arise:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 20px var(--mana-blue);
+        }
+
+        .arise-text {
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            font-weight: 900;
+            font-style: italic;
+        }
+
+        .glass {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        .mana-aura {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(0, 210, 255, 0.1) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Hide Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #050505;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--mana-blue);
+            border-radius: 3px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass py-4 px-6 md:px-12 flex justify-between items-center border-b border-cyan-900/30">
+        <div class="text-2xl font-black glow-blue font-orbitron tracking-tighter">SHADOW NEXUS</div>
+        <div class="hidden md:flex space-x-8 font-semibold tracking-widest text-sm">
+            <a href="#games" class="hover:text-cyan-400 transition">GAMES</a>
+            <a href="#subs" class="hover:text-purple-400 transition">SUBSCRIPTIONS</a>
+            <a href="#contact" class="hover:text-cyan-400 transition">CONTACT</a>
+        </div>
+        <div class="flex items-center space-x-4">
+            <a href="https://wa.me/1876XXXXXXX" class="text-green-400 hover:scale-110 transition">
+                <i data-lucide="phone"></i>
+            </a>
+            <button onclick="toggleDM()" class="text-cyan-400 hover:scale-110 transition">
+                <i data-lucide="message-square"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-screen flex flex-col justify-center items-center text-center px-4 pt-20 overflow-hidden">
+        <div class="mana-aura"></div>
+        <div class="absolute inset-0 z-0 opacity-30">
+            <!-- Subtle background effect could be added here -->
+             <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-cyan-500/10 rounded-full blur-[100px]"></div>
+             <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-[100px]"></div>
+        </div>
+
+        <h2 class="text-cyan-400 font-bold tracking-[0.3em] mb-4 text-sm md:text-base animate-pulse">RANK: S-CLASS STOREFRONT</h2>
+        <h1 class="text-5xl md:text-8xl font-black mb-6 font-orbitron leading-none">
+            LEVEL UP YOUR <br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-purple-500 glow-blue">GAMEPLAY</span>
+        </h1>
+        <p class="max-w-2xl text-lg md:text-xl text-gray-400 mb-10 leading-relaxed">
+            Premium in-game currency and app subscriptions for the true Monarchs.
+            <span class="text-cyan-300">No Debit Card? No Problem.</span> Cash transactions in May Pen.
+        </p>
+
+        <div class="flex flex-col md:flex-row gap-4">
+            <a href="#games" class="btn-arise arise-text px-10 py-4 rounded-sm text-black">Arise</a>
+            <a href="#contact" class="px-10 py-4 border border-cyan-500/50 hover:bg-cyan-500/10 transition rounded-sm arise-text">Contact</a>
+        </div>
+
+        <div class="mt-20 flex items-center text-cyan-500/60 text-xs font-bold tracking-widest uppercase">
+            <i data-lucide="map-pin" class="mr-2 w-4 h-4"></i>
+            Exclusive Meetups: May Pen, Clarendon
+        </div>
+    </section>
+
+    <!-- Games Section -->
+    <section id="games" class="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+        <div class="flex items-center space-x-4 mb-12">
+            <div class="h-1 w-20 bg-cyan-500"></div>
+            <h2 class="text-3xl font-black font-orbitron tracking-wider uppercase">Dungeon Rewards (Currency)</h2>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Roblox -->
+            <div class="glass p-6 rounded-lg border-glow animate-float">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-gray-800 rounded flex items-center justify-center">
+                        <i data-lucide="box" class="text-red-500 w-10 h-10"></i>
+                    </div>
+                    <span class="bg-red-500/20 text-red-500 px-3 py-1 text-xs font-bold rounded">ROBLOX</span>
+                </div>
+                <h3 class="text-xl font-bold mb-4 font-orbitron">ROBUX</h3>
+                <ul class="space-y-2 text-gray-400 mb-6">
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>400 Robux</span> <span class="text-cyan-400">$1,000</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>800 Robux</span> <span class="text-cyan-400">$1,800</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>1,700 Robux</span> <span class="text-cyan-400">$3,500</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>4,500 Robux</span> <span class="text-cyan-400">$8,500</span></li>
+                    <li class="flex justify-between"><span>10,000 Robux</span> <span class="text-cyan-400">$18,000</span></li>
+                </ul>
+                <button onclick="openOrder('Robux')" class="w-full py-3 bg-red-600/20 border border-red-600/50 hover:bg-red-600 hover:text-white transition font-bold uppercase tracking-widest text-xs">Acquire</button>
+            </div>
+
+            <!-- Free Fire -->
+            <div class="glass p-6 rounded-lg border-glow" style="animation-delay: 0.2s;">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-gray-800 rounded flex items-center justify-center">
+                        <i data-lucide="gem" class="text-cyan-400 w-10 h-10"></i>
+                    </div>
+                    <span class="bg-cyan-500/20 text-cyan-400 px-3 py-1 text-xs font-bold rounded">FREE FIRE</span>
+                </div>
+                <h3 class="text-xl font-bold mb-4 font-orbitron">DIAMONDS</h3>
+                <ul class="space-y-2 text-gray-400 mb-6">
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>100+10 Dia</span> <span class="text-cyan-400">$350</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>310+31 Dia</span> <span class="text-cyan-400">$850</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>520+52 Dia</span> <span class="text-cyan-400">$1,500</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>1060+106 Dia</span> <span class="text-cyan-400">$2,800</span></li>
+                    <li class="flex justify-between"><span>2180+218 Dia</span> <span class="text-cyan-400">$5,500</span></li>
+                </ul>
+                <button onclick="openOrder('Diamonds')" class="w-full py-3 bg-cyan-600/20 border border-cyan-600/50 hover:bg-cyan-600 hover:text-white transition font-bold uppercase tracking-widest text-xs">Acquire</button>
+            </div>
+
+            <!-- PUBG -->
+            <div class="glass p-6 rounded-lg border-glow" style="animation-delay: 0.4s;">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-gray-800 rounded flex items-center justify-center">
+                        <i data-lucide="shield" class="text-yellow-500 w-10 h-10"></i>
+                    </div>
+                    <span class="bg-yellow-500/20 text-yellow-500 px-3 py-1 text-xs font-bold rounded">PUBG MOBILE</span>
+                </div>
+                <h3 class="text-xl font-bold mb-4 font-orbitron">UC</h3>
+                <ul class="space-y-2 text-gray-400 mb-6">
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>60 UC</span> <span class="text-cyan-400">$300</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>325 UC</span> <span class="text-cyan-400">$1,200</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>660 UC</span> <span class="text-cyan-400">$2,200</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>1800 UC</span> <span class="text-cyan-400">$5,500</span></li>
+                    <li class="flex justify-between"><span>3850 UC</span> <span class="text-cyan-400">$10,500</span></li>
+                </ul>
+                <button onclick="openOrder('UC')" class="w-full py-3 bg-yellow-600/20 border border-yellow-600/50 hover:bg-yellow-600 hover:text-white transition font-bold uppercase tracking-widest text-xs">Acquire</button>
+            </div>
+
+            <!-- COD Mobile -->
+            <div class="glass p-6 rounded-lg border-glow">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-gray-800 rounded flex items-center justify-center">
+                        <i data-lucide="crosshair" class="text-white w-10 h-10"></i>
+                    </div>
+                    <span class="bg-white/20 text-white px-3 py-1 text-xs font-bold rounded">COD MOBILE</span>
+                </div>
+                <h3 class="text-xl font-bold mb-4 font-orbitron">CP</h3>
+                <ul class="space-y-2 text-gray-400 mb-6">
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>80 CP</span> <span class="text-cyan-400">$350</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>420 CP</span> <span class="text-cyan-400">$1,500</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>880 CP</span> <span class="text-cyan-400">$2,800</span></li>
+                    <li class="flex justify-between"><span>2400 CP</span> <span class="text-cyan-400">$6,500</span></li>
+                </ul>
+                <button onclick="openOrder('CP')" class="w-full py-3 bg-white/20 border border-white/50 hover:bg-white hover:text-black transition font-bold uppercase tracking-widest text-xs">Acquire</button>
+            </div>
+
+            <!-- Mobile Legends -->
+            <div class="glass p-6 rounded-lg border-glow">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-gray-800 rounded flex items-center justify-center">
+                        <i data-lucide="sparkles" class="text-purple-400 w-10 h-10"></i>
+                    </div>
+                    <span class="bg-purple-500/20 text-purple-400 px-3 py-1 text-xs font-bold rounded">MLBB</span>
+                </div>
+                <h3 class="text-xl font-bold mb-4 font-orbitron">DIAMONDS</h3>
+                <ul class="space-y-2 text-gray-400 mb-6">
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>86 Diamonds</span> <span class="text-cyan-400">$400</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>257 Diamonds</span> <span class="text-cyan-400">$1,100</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>706 Diamonds</span> <span class="text-cyan-400">$2,800</span></li>
+                    <li class="flex justify-between"><span>Weekly Pass</span> <span class="text-cyan-400">$500</span></li>
+                </ul>
+                <button onclick="openOrder('MLBB Diamonds')" class="w-full py-3 bg-purple-600/20 border border-purple-600/50 hover:bg-purple-600 hover:text-white transition font-bold uppercase tracking-widest text-xs">Acquire</button>
+            </div>
+
+            <!-- Genshin Impact -->
+            <div class="glass p-6 rounded-lg border-glow">
+                <div class="flex justify-between items-start mb-4">
+                    <div class="w-16 h-16 bg-gray-800 rounded flex items-center justify-center">
+                        <i data-lucide="star" class="text-orange-400 w-10 h-10"></i>
+                    </div>
+                    <span class="bg-orange-500/20 text-orange-400 px-3 py-1 text-xs font-bold rounded">GENSHIN</span>
+                </div>
+                <h3 class="text-xl font-bold mb-4 font-orbitron">CRYSTALS</h3>
+                <ul class="space-y-2 text-gray-400 mb-6">
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>60 Crystals</span> <span class="text-cyan-400">$350</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>300 Crystals</span> <span class="text-cyan-400">$1,300</span></li>
+                    <li class="flex justify-between border-b border-white/5 pb-1"><span>Blessing Moon</span> <span class="text-cyan-400">$1,300</span></li>
+                    <li class="flex justify-between"><span>980 Crystals</span> <span class="text-cyan-400">$3,500</span></li>
+                </ul>
+                <button onclick="openOrder('Genshin Crystals')" class="w-full py-3 bg-orange-600/20 border border-orange-600/50 hover:bg-orange-600 hover:text-white transition font-bold uppercase tracking-widest text-xs">Acquire</button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Subscriptions Section -->
+    <section id="subs" class="py-24 px-6 md:px-12 bg-gradient-to-b from-transparent to-purple-900/10">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center space-x-4 mb-12 justify-end">
+                <h2 class="text-3xl font-black font-orbitron tracking-wider uppercase">Monarch Privileges</h2>
+                <div class="h-1 w-20 bg-purple-500"></div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <!-- Spotify -->
+                <div class="glass p-6 rounded border border-purple-500/20 hover:border-green-500/50 transition group">
+                    <i data-lucide="music" class="w-8 h-8 mb-4 text-green-500 group-hover:scale-110 transition"></i>
+                    <h4 class="font-bold mb-2">Spotify Premium</h4>
+                    <p class="text-xs text-gray-500 mb-4">No ads, high quality audio.</p>
+                    <div class="text-cyan-400 font-bold mb-4">$1,200/mo</div>
+                    <button onclick="openOrder('Spotify')" class="w-full py-2 text-xs border border-white/20 hover:bg-white hover:text-black transition uppercase">Select</button>
+                </div>
+                <!-- Netflix -->
+                <div class="glass p-6 rounded border border-purple-500/20 hover:border-red-500/50 transition group">
+                    <i data-lucide="tv" class="w-8 h-8 mb-4 text-red-600 group-hover:scale-110 transition"></i>
+                    <h4 class="font-bold mb-2">Netflix</h4>
+                    <p class="text-xs text-gray-500 mb-4">HD/4K Streaming.</p>
+                    <div class="text-cyan-400 font-bold mb-4">From $1,500/mo</div>
+                    <button onclick="openOrder('Netflix')" class="w-full py-2 text-xs border border-white/20 hover:bg-white hover:text-black transition uppercase">Select</button>
+                </div>
+                <!-- YouTube -->
+                <div class="glass p-6 rounded border border-purple-500/20 hover:border-red-500/50 transition group">
+                    <i data-lucide="youtube" class="w-8 h-8 mb-4 text-red-500 group-hover:scale-110 transition"></i>
+                    <h4 class="font-bold mb-2">YouTube Premium</h4>
+                    <p class="text-xs text-gray-500 mb-4">Ad-free & Music.</p>
+                    <div class="text-cyan-400 font-bold mb-4">$1,000/mo</div>
+                    <button onclick="openOrder('YouTube')" class="w-full py-2 text-xs border border-white/20 hover:bg-white hover:text-black transition uppercase">Select</button>
+                </div>
+                <!-- Amazon -->
+                <div class="glass p-6 rounded border border-purple-500/20 hover:border-yellow-500/50 transition group">
+                    <i data-lucide="shopping-cart" class="w-8 h-8 mb-4 text-yellow-500 group-hover:scale-110 transition"></i>
+                    <h4 class="font-bold mb-2">Amazon Prime</h4>
+                    <p class="text-xs text-gray-500 mb-4">Prime Video & Delivery.</p>
+                    <div class="text-cyan-400 font-bold mb-4">$1,500/mo</div>
+                    <button onclick="openOrder('Amazon')" class="w-full py-2 text-xs border border-white/20 hover:bg-white hover:text-black transition uppercase">Select</button>
+                </div>
+                <!-- Apple Music -->
+                <div class="glass p-6 rounded border border-purple-500/20 hover:border-pink-500/50 transition group">
+                    <i data-lucide="apple" class="w-8 h-8 mb-4 text-pink-500 group-hover:scale-110 transition"></i>
+                    <h4 class="font-bold mb-2">Apple Music</h4>
+                    <p class="text-xs text-gray-500 mb-4">Lossless Audio.</p>
+                    <div class="text-cyan-400 font-bold mb-4">$1,200/mo</div>
+                    <button onclick="openOrder('Apple Music')" class="w-full py-2 text-xs border border-white/20 hover:bg-white hover:text-black transition uppercase">Select</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Contact & Transaction -->
+    <section id="contact" class="py-24 px-6 md:px-12 max-w-4xl mx-auto text-center">
+        <h2 class="text-4xl font-black font-orbitron mb-6 glow-purple">INITIATE TRANSACTION</h2>
+        <p class="text-gray-400 mb-12">Transactions are completed in person to ensure security for both parties.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-left">
+            <div class="glass p-8 rounded-lg border border-cyan-500/30">
+                <h3 class="text-xl font-bold mb-6 flex items-center">
+                    <i data-lucide="map-pin" class="mr-2 text-cyan-400"></i> Meet-up Location
+                </h3>
+                <div class="space-y-4">
+                    <div class="p-4 bg-white/5 rounded border border-white/10">
+                        <p class="font-bold text-white uppercase tracking-widest">May Pen</p>
+                        <p class="text-sm text-gray-400">Clarendon, Jamaica</p>
+                    </div>
+                    <p class="text-xs text-gray-500 italic">* Public locations only for safety (Town Center, Bargain Village, etc.)</p>
+                </div>
+            </div>
+
+            <div class="glass p-8 rounded-lg border border-purple-500/30">
+                <h3 class="text-xl font-bold mb-6 flex items-center">
+                    <i data-lucide="message-circle" class="mr-2 text-purple-400"></i> Direct Contact
+                </h3>
+                <div class="space-y-4">
+                    <a href="https://wa.me/1876XXXXXXX" class="flex items-center justify-center w-full py-4 bg-green-600 hover:bg-green-700 transition rounded font-bold">
+                        <i data-lucide="phone" class="mr-2"></i> WhatsApp Message
+                    </a>
+                    <button onclick="toggleDM()" class="flex items-center justify-center w-full py-4 bg-cyan-600 hover:bg-cyan-700 transition rounded font-bold">
+                        <i data-lucide="send" class="mr-2"></i> Direct Message Site
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer class="py-12 px-6 text-center border-t border-white/5 text-gray-600 text-sm">
+        <p class="mb-4">&copy; 2024 SHADOW NEXUS. ALL RIGHTS RESERVED. POWERED BY MANA.</p>
+        <div class="flex justify-center space-x-6">
+            <i data-lucide="instagram" class="w-5 h-5 hover:text-cyan-400 cursor-pointer"></i>
+            <i data-lucide="twitter" class="w-5 h-5 hover:text-cyan-400 cursor-pointer"></i>
+            <i data-lucide="facebook" class="w-5 h-5 hover:text-cyan-400 cursor-pointer"></i>
+        </div>
+    </footer>
+
+    <!-- DM Modal -->
+    <div id="dmModal" class="modal">
+        <div class="glass p-8 rounded-lg w-full max-w-md mx-4 relative border border-cyan-500/50">
+            <button onclick="toggleDM()" class="absolute top-4 right-4 text-gray-500 hover:text-white">
+                <i data-lucide="x"></i>
+            </button>
+            <h3 class="text-2xl font-bold mb-6 font-orbitron glow-blue">DIRECT MESSAGE</h3>
+            <form id="dmForm" onsubmit="handleDM(event)">
+                <div class="mb-4">
+                    <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2">Subject</label>
+                    <input type="text" id="dmSubject" required class="w-full bg-black/50 border border-white/10 p-3 rounded focus:border-cyan-500 outline-none transition" placeholder="e.g. 800 Robux Order">
+                </div>
+                <div class="mb-6">
+                    <label class="block text-xs uppercase tracking-widest text-gray-500 mb-2">Message</label>
+                    <textarea id="dmMessage" required class="w-full bg-black/50 border border-white/10 p-3 rounded h-32 focus:border-cyan-500 outline-none transition" placeholder="Tell us when you want to meet..."></textarea>
+                </div>
+                <button type="submit" class="w-full btn-arise py-4 text-black arise-text rounded">Send Signal</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Admin Panel (Hidden) -->
+    <div id="adminPanel" class="fixed inset-0 bg-black z-[100] p-8 hidden overflow-y-auto">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-12">
+                <h1 class="text-4xl font-black font-orbitron glow-purple tracking-tighter">7784 NEXUS COMMAND</h1>
+                <button onclick="closeAdmin()" class="text-gray-500 hover:text-white">EXIT SYSTEM</button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <div class="glass p-6 rounded border border-cyan-500/30">
+                    <p class="text-xs text-gray-500 mb-1">Total Signals</p>
+                    <h4 class="text-3xl font-bold" id="signalCount">0</h4>
+                </div>
+                <div class="glass p-6 rounded border border-purple-500/30">
+                    <p class="text-xs text-gray-500 mb-1">System Status</p>
+                    <h4 class="text-3xl font-bold text-green-500">ONLINE</h4>
+                </div>
+                <div class="glass p-6 rounded border border-white/30">
+                    <p class="text-xs text-gray-500 mb-1">Active Monarchs</p>
+                    <h4 class="text-3xl font-bold">1</h4>
+                </div>
+            </div>
+
+            <div class="glass p-8 rounded-lg">
+                <h3 class="text-xl font-bold mb-6 font-orbitron">RECENT SIGNALS (MESSAGES)</h3>
+                <div id="messageLog" class="space-y-4">
+                    <p class="text-gray-600 italic text-center py-8">No signals intercepted yet...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Initialize Lucide Icons
+        lucide.createIcons();
+
+        // DM Modal Toggle
+        function toggleDM() {
+            const modal = document.getElementById('dmModal');
+            modal.classList.toggle('active');
+        }
+
+        // Handle DM Submission
+        function handleDM(e) {
+            e.preventDefault();
+            const subject = document.getElementById('dmSubject').value;
+            const message = document.getElementById('dmMessage').value;
+
+            const signal = {
+                id: Date.now(),
+                subject,
+                message,
+                time: new Date().toLocaleString()
+            };
+
+            // Save to LocalStorage for Admin Panel
+            const signals = JSON.parse(localStorage.getItem('shadowSignals') || '[]');
+            signals.unshift(signal);
+            localStorage.setItem('shadowSignals', JSON.stringify(signals));
+
+            alert('Signal sent to the Monarch. We will contact you soon.');
+            document.getElementById('dmForm').reset();
+            toggleDM();
+            updateAdminLog();
+        }
+
+        // Open Order Pre-filled
+        function openOrder(item) {
+            document.getElementById('dmSubject').value = `Order: ${item}`;
+            toggleDM();
+        }
+
+        // Admin Panel Logic
+        function checkHash() {
+            if (window.location.hash === '#/7784Nexus') {
+                document.getElementById('adminPanel').classList.remove('hidden');
+                updateAdminLog();
+            } else {
+                document.getElementById('adminPanel').classList.add('hidden');
+            }
+        }
+
+        function closeAdmin() {
+            window.location.hash = '';
+            document.getElementById('adminPanel').classList.add('hidden');
+        }
+
+        function updateAdminLog() {
+            const signals = JSON.parse(localStorage.getItem('shadowSignals') || '[]');
+            const log = document.getElementById('messageLog');
+            const count = document.getElementById('signalCount');
+
+            count.innerText = signals.length;
+
+            if (signals.length === 0) {
+                log.innerHTML = '<p class="text-gray-600 italic text-center py-8">No signals intercepted yet...</p>';
+                return;
+            }
+
+            log.innerHTML = signals.map(s => `
+                <div class="p-4 bg-white/5 border border-white/10 rounded">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-cyan-400 font-bold">${s.subject}</span>
+                        <span class="text-[10px] text-gray-500">${s.time}</span>
+                    </div>
+                    <p class="text-sm text-gray-400">${s.message}</p>
+                </div>
+            `).join('');
+        }
+
+        window.addEventListener('hashchange', checkHash);
+        window.addEventListener('load', checkHash);
+
+        // Smooth Scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
