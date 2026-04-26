@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nexus Store | Shadow Monarch Gaming & Subscriptions</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --monarch-blue: #1b45d7;
+            --monarch-purple: #a855f7;
+            --monarch-dark: #050505;
+            --monarch-glow: rgba(27, 69, 215, 0.4);
+        }
+
+        body {
+            background-color: var(--monarch-dark);
+            color: #ffffff;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, .font-orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        .glow-text {
+            text-shadow: 0 0 10px var(--monarch-blue), 0 0 20px var(--monarch-purple);
+        }
+
+        .monarch-card {
+            background: rgba(20, 20, 20, 0.8);
+            border: 1px solid rgba(27, 69, 215, 0.3);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .monarch-card:hover {
+            border-color: var(--monarch-blue);
+            box-shadow: 0 0 20px var(--monarch-glow);
+            transform: translateY(-5px);
+        }
+
+        .monarch-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(transparent, var(--monarch-blue), transparent, transparent);
+            animation: rotate 4s linear infinite;
+            opacity: 0.1;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .admin-panel {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 5, 5, 0.95);
+            z-index: 9999;
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .whatsapp-float {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background-color: #25d366;
+            color: white;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 15px rgba(37, 211, 102, 0.5);
+            z-index: 1000;
+            transition: transform 0.3s;
+        }
+
+        .whatsapp-float:hover {
+            transform: scale(1.1);
+        }
+
+        .hero-gradient {
+            background: radial-gradient(circle at center, #1b45d722 0%, #050505 70%);
+        }
+
+        .level-up-btn {
+            background: linear-gradient(45deg, var(--monarch-blue), var(--monarch-purple));
+            clip-path: polygon(10% 0, 100% 0, 90% 100%, 0% 100%);
+            transition: all 0.3s;
+        }
+
+        .level-up-btn:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 0 15px var(--monarch-blue);
+        }
+    </style>
+</head>
+<body class="hero-gradient min-h-screen">
+
+    <!-- Navigation -->
+    <nav class="p-6 flex justify-between items-center border-b border-blue-900/30">
+        <div class="text-3xl font-black font-orbitron tracking-tighter glow-text">NEXUS</div>
+        <div class="hidden md:flex space-x-8 font-bold uppercase tracking-widest text-sm">
+            <a href="#games" class="hover:text-blue-500 transition">Games</a>
+            <a href="#subscriptions" class="hover:text-purple-500 transition">Apps</a>
+            <a href="#contact" class="hover:text-blue-400 transition">Contact</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="py-20 px-6 text-center">
+        <h1 class="text-6xl md:text-8xl font-black mb-4 glow-text uppercase italic">Arise.</h1>
+        <p class="text-xl md:text-2xl text-blue-300 max-w-2xl mx-auto mb-8 font-light uppercase tracking-[0.2em]">
+            Level up your digital life. Premium currencies and subscriptions.
+        </p>
+        <div class="inline-block bg-blue-900/20 border border-blue-500/50 px-6 py-2 rounded-full text-blue-400 text-sm uppercase tracking-widest mb-10">
+            📍 May Pen, Clarendon - In-Person Transactions
+        </div>
+        <div>
+            <a href="#games" class="level-up-btn px-10 py-4 font-bold text-xl uppercase tracking-widest">Explore Shop</a>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-6 py-20" id="shop-container">
+
+        <!-- Game Currency Section -->
+        <section id="games" class="mb-32">
+            <h2 class="text-4xl font-bold font-orbitron mb-12 flex items-center">
+                <span class="w-12 h-1 bg-blue-600 mr-4"></span> GAME CURRENCY
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                <!-- Roblox -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Roblox_player_icon_black.svg" alt="Roblox" class="h-16 mb-6 invert">
+                    <h3 class="text-2xl font-bold mb-4">ROBLOX ROBUX</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6 text-sm">
+                        <li class="flex justify-between"><span>400 Robux</span> <span class="text-blue-400 font-bold">$4.99</span></li>
+                        <li class="flex justify-between"><span>800 Robux</span> <span class="text-blue-400 font-bold">$9.99</span></li>
+                        <li class="flex justify-between"><span>1,700 Robux</span> <span class="text-blue-400 font-bold">$19.99</span></li>
+                        <li class="flex justify-between"><span>4,500 Robux</span> <span class="text-blue-400 font-bold">$49.99</span></li>
+                        <li class="flex justify-between"><span>10,000 Robux</span> <span class="text-blue-400 font-bold">$99.99</span></li>
+                        <li class="flex justify-between"><span>22,500 Robux</span> <span class="text-blue-400 font-bold">$199.99</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-blue-900/30 border border-blue-500 hover:bg-blue-600 transition font-bold uppercase tracking-widest text-xs mt-4">Select Package</button>
+                </div>
+
+                <!-- Free Fire -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/a/a1/Free_Fire_Logo.png" alt="Free Fire" class="h-16 mb-6">
+                    <h3 class="text-2xl font-bold mb-4">FREE FIRE DIAMONDS</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6 text-sm">
+                        <li class="flex justify-between"><span>100+10 Diamonds</span> <span class="text-blue-400 font-bold">$0.99</span></li>
+                        <li class="flex justify-between"><span>310+31 Diamonds</span> <span class="text-blue-400 font-bold">$2.99</span></li>
+                        <li class="flex justify-between"><span>520+52 Diamonds</span> <span class="text-blue-400 font-bold">$4.99</span></li>
+                        <li class="flex justify-between"><span>1060+106 Diamonds</span> <span class="text-blue-400 font-bold">$9.99</span></li>
+                        <li class="flex justify-between"><span>2180+218 Diamonds</span> <span class="text-blue-400 font-bold">$19.99</span></li>
+                        <li class="flex justify-between"><span>5600+560 Diamonds</span> <span class="text-blue-400 font-bold">$49.99</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-blue-900/30 border border-blue-500 hover:bg-blue-600 transition font-bold uppercase tracking-widest text-xs mt-4">Select Package</button>
+                </div>
+
+                <!-- PUBG Mobile -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/a/a2/PUBG_Mobile_Logo.png" alt="PUBG" class="h-16 mb-6">
+                    <h3 class="text-2xl font-bold mb-4">PUBG MOBILE UC</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6 text-sm">
+                        <li class="flex justify-between"><span>60 UC</span> <span class="text-blue-400 font-bold">$0.99</span></li>
+                        <li class="flex justify-between"><span>300+25 UC</span> <span class="text-blue-400 font-bold">$4.99</span></li>
+                        <li class="flex justify-between"><span>600+60 UC</span> <span class="text-blue-400 font-bold">$9.99</span></li>
+                        <li class="flex justify-between"><span>1500+300 UC</span> <span class="text-blue-400 font-bold">$24.99</span></li>
+                        <li class="flex justify-between"><span>3000+850 UC</span> <span class="text-blue-400 font-bold">$49.99</span></li>
+                        <li class="flex justify-between"><span>6000+2100 UC</span> <span class="text-blue-400 font-bold">$99.99</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-blue-900/30 border border-blue-500 hover:bg-blue-600 transition font-bold uppercase tracking-widest text-xs mt-4">Select Package</button>
+                </div>
+
+                <!-- CODM -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/0/0d/Call_of_Duty_Mobile_logo.png" alt="CODM" class="h-16 mb-6">
+                    <h3 class="text-2xl font-bold mb-4">COD MOBILE CP</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6 text-sm">
+                        <li class="flex justify-between"><span>80 CP</span> <span class="text-blue-400 font-bold">$0.99</span></li>
+                        <li class="flex justify-between"><span>400+20 CP</span> <span class="text-blue-400 font-bold">$4.99</span></li>
+                        <li class="flex justify-between"><span>800+80 CP</span> <span class="text-blue-400 font-bold">$9.99</span></li>
+                        <li class="flex justify-between"><span>2000+400 CP</span> <span class="text-blue-400 font-bold">$24.99</span></li>
+                        <li class="flex justify-between"><span>4000+1000 CP</span> <span class="text-blue-400 font-bold">$49.99</span></li>
+                        <li class="flex justify-between"><span>8000+2800 CP</span> <span class="text-blue-400 font-bold">$99.99</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-blue-900/30 border border-blue-500 hover:bg-blue-600 transition font-bold uppercase tracking-widest text-xs mt-4">Select Package</button>
+                </div>
+
+                <!-- Genshin Impact -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/5/5d/Genshin_Impact_logo.png" alt="Genshin" class="h-16 mb-6">
+                    <h3 class="text-2xl font-bold mb-4">GENSHIN IMPACT</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6 text-sm">
+                        <li class="flex justify-between"><span>60 Crystals</span> <span class="text-blue-400 font-bold">$0.99</span></li>
+                        <li class="flex justify-between"><span>300 Crystals</span> <span class="text-blue-400 font-bold">$4.99</span></li>
+                        <li class="flex justify-between"><span>980 Crystals</span> <span class="text-blue-400 font-bold">$14.99</span></li>
+                        <li class="flex justify-between"><span>1980 Crystals</span> <span class="text-blue-400 font-bold">$29.99</span></li>
+                        <li class="flex justify-between"><span>3280 Crystals</span> <span class="text-blue-400 font-bold">$49.99</span></li>
+                        <li class="flex justify-between"><span>6480 Crystals</span> <span class="text-blue-400 font-bold">$99.99</span></li>
+                        <li class="flex justify-between"><span>Welkin Moon</span> <span class="text-blue-400 font-bold">$4.99</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-blue-900/30 border border-blue-500 hover:bg-blue-600 transition font-bold uppercase tracking-widest text-xs mt-4">Select Package</button>
+                </div>
+
+                <!-- Blood Strike -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/en/thumb/4/4b/Blood_Strike_logo.png/220px-Blood_Strike_logo.png" alt="Blood Strike" class="h-16 mb-6">
+                    <h3 class="text-2xl font-bold mb-4">BLOOD STRIKE GOLD</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6 text-sm">
+                        <li class="flex justify-between"><span>100+16 Gold</span> <span class="text-blue-400 font-bold">$0.99</span></li>
+                        <li class="flex justify-between"><span>300+52 Gold</span> <span class="text-blue-400 font-bold">$2.99</span></li>
+                        <li class="flex justify-between"><span>500+94 Gold</span> <span class="text-blue-400 font-bold">$4.99</span></li>
+                        <li class="flex justify-between"><span>1000+198 Gold</span> <span class="text-blue-400 font-bold">$9.99</span></li>
+                        <li class="flex justify-between"><span>2000+416 Gold</span> <span class="text-blue-400 font-bold">$19.99</span></li>
+                        <li class="flex justify-between"><span>5000+1100 Gold</span> <span class="text-blue-400 font-bold">$49.99</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-blue-900/30 border border-blue-500 hover:bg-blue-600 transition font-bold uppercase tracking-widest text-xs mt-4">Select Package</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- App Subscription Section -->
+        <section id="subscriptions" class="mb-32">
+            <h2 class="text-4xl font-bold font-orbitron mb-12 flex items-center">
+                <span class="w-12 h-1 bg-purple-600 mr-4"></span> APP SUBSCRIPTIONS
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+                <!-- Spotify -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/1/19/Spotify_logo_with_text.svg" alt="Spotify" class="h-12 mb-6 invert">
+                    <h3 class="text-2xl font-bold mb-4">SPOTIFY PREMIUM</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6">
+                        <li class="flex justify-between"><span>Individual</span> <span class="text-purple-400 font-bold">$6.49/mo</span></li>
+                        <li class="flex justify-between"><span>Student</span> <span class="text-purple-400 font-bold">$3.49/mo</span></li>
+                        <li class="flex justify-between"><span>Family (6 accounts)</span> <span class="text-purple-400 font-bold">$10.99/mo</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-purple-900/30 border border-purple-500 hover:bg-purple-600 transition font-bold uppercase tracking-widest text-sm">Subscribe</button>
+                </div>
+
+                <!-- Netflix -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/0/08/Netflix_2015_logo.svg" alt="Netflix" class="h-10 mb-8 invert">
+                    <h3 class="text-2xl font-bold mb-4">NETFLIX</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6">
+                        <li class="flex justify-between"><span>Basic (1 screen)</span> <span class="text-purple-400 font-bold">$8.99/mo</span></li>
+                        <li class="flex justify-between"><span>Standard (2 screens)</span> <span class="text-purple-400 font-bold">$13.99/mo</span></li>
+                        <li class="flex justify-between"><span>Premium (4 screens)</span> <span class="text-purple-400 font-bold">$19.99/mo</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-purple-900/30 border border-purple-500 hover:bg-purple-600 transition font-bold uppercase tracking-widest text-sm">Subscribe</button>
+                </div>
+
+                <!-- YouTube -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/b/b8/YouTube_Logo_2017.svg" alt="YouTube" class="h-10 mb-8 invert">
+                    <h3 class="text-2xl font-bold mb-4">YOUTUBE PREMIUM</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6">
+                        <li class="flex justify-between"><span>Individual (JMD)</span> <span class="text-purple-400 font-bold">$1,249/mo</span></li>
+                        <li class="flex justify-between"><span>Family (JMD)</span> <span class="text-purple-400 font-bold">$2,349/mo</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-purple-900/30 border border-purple-500 hover:bg-purple-600 transition font-bold uppercase tracking-widest text-sm">Subscribe</button>
+                </div>
+
+                <!-- Amazon Prime -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/f/f3/Amazon_prime_logo.svg" alt="Amazon Prime" class="h-10 mb-8 invert">
+                    <h3 class="text-2xl font-bold mb-4">AMAZON PRIME</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6">
+                        <li class="flex justify-between"><span>Monthly</span> <span class="text-purple-400 font-bold">$14.99/mo</span></li>
+                        <li class="flex justify-between"><span>Prime Video Only</span> <span class="text-purple-400 font-bold">$8.99/mo</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-purple-900/30 border border-purple-500 hover:bg-purple-600 transition font-bold uppercase tracking-widest text-sm">Subscribe</button>
+                </div>
+
+                <!-- Apple Music -->
+                <div class="monarch-card p-6 rounded-2xl">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Apple_Music_logo.svg" alt="Apple Music" class="h-12 mb-6 invert">
+                    <h3 class="text-2xl font-bold mb-4">APPLE MUSIC</h3>
+                    <ul class="space-y-2 text-gray-300 mb-6">
+                        <li class="flex justify-between"><span>Individual</span> <span class="text-purple-400 font-bold">$10.99/mo</span></li>
+                        <li class="flex justify-between"><span>Family</span> <span class="text-purple-400 font-bold">$16.99/mo</span></li>
+                    </ul>
+                    <button class="w-full py-3 bg-purple-900/30 border border-purple-500 hover:bg-purple-600 transition font-bold uppercase tracking-widest text-sm">Subscribe</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Contact Section -->
+        <section id="contact" class="mb-32">
+            <h2 class="text-4xl font-bold font-orbitron mb-12 flex items-center">
+                <span class="w-12 h-1 bg-blue-400 mr-4"></span> CONTACT & ORDERS
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-12">
+                <div class="monarch-card p-8 rounded-2xl">
+                    <h3 class="text-2xl font-bold mb-6 font-orbitron">DIRECT MESSAGE</h3>
+                    <form onsubmit="event.preventDefault(); alert('Message sent through the system!');">
+                        <div class="mb-4">
+                            <label class="block text-sm uppercase tracking-widest mb-2">Name</label>
+                            <input type="text" class="w-full bg-black/50 border border-blue-900/50 p-3 rounded focus:border-blue-500 outline-none transition" placeholder="Hunter Name">
+                        </div>
+                        <div class="mb-4">
+                            <label class="block text-sm uppercase tracking-widest mb-2">Discord/Contact</label>
+                            <input type="text" class="w-full bg-black/50 border border-blue-900/50 p-3 rounded focus:border-blue-500 outline-none transition" placeholder="Shadow#1234">
+                        </div>
+                        <div class="mb-6">
+                            <label class="block text-sm uppercase tracking-widest mb-2">Message</label>
+                            <textarea class="w-full bg-black/50 border border-blue-900/50 p-3 rounded h-32 focus:border-blue-500 outline-none transition" placeholder="What do you need to level up?"></textarea>
+                        </div>
+                        <button class="level-up-btn w-full py-4 font-bold uppercase tracking-widest">Send Transmission</button>
+                    </form>
+                </div>
+                <div class="flex flex-col justify-center space-y-8">
+                    <div class="monarch-card p-6 rounded-2xl border-l-4 border-l-blue-500">
+                        <h4 class="text-xl font-bold mb-2">LOCATION</h4>
+                        <p class="text-gray-400">May Pen, Clarendon, Jamaica</p>
+                        <p class="text-sm text-blue-400 mt-2">MEET-UP TRANSACTIONS ONLY</p>
+                    </div>
+                    <div class="monarch-card p-6 rounded-2xl border-l-4 border-l-green-500">
+                        <h4 class="text-xl font-bold mb-2">WHATSAPP</h4>
+                        <p class="text-gray-400">Fastest way to get a response.</p>
+                        <a href="https://wa.me/8760000000" class="text-green-400 font-bold hover:underline mt-2 inline-block">Chat Now</a>
+                    </div>
+                    <div class="monarch-card p-6 rounded-2xl border-l-4 border-l-purple-500">
+                        <h4 class="text-xl font-bold mb-2">BUSINESS HOURS</h4>
+                        <p class="text-gray-400">Monday - Saturday: 9 AM - 8 PM</p>
+                        <p class="text-gray-400">Sunday: Closed (Training)</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Admin Panel Overlay -->
+    <div id="adminPanel" class="admin-panel overflow-y-auto">
+        <div class="max-w-4xl mx-auto">
+            <div class="flex justify-between items-center mb-10">
+                <h2 class="text-4xl font-orbitron glow-text">SYSTEM ADMIN</h2>
+                <button onclick="window.location.hash=''" class="text-red-500 font-bold">DISCONNECT</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="monarch-card p-6 rounded-lg">
+                    <h3 class="text-xl mb-4 text-blue-400">Total Sales</h3>
+                    <p class="text-4xl font-bold">$0.00</p>
+                </div>
+                <div class="monarch-card p-6 rounded-lg">
+                    <h3 class="text-xl mb-4 text-purple-400">Pending Orders</h3>
+                    <p class="text-4xl font-bold">0</p>
+                </div>
+                <div class="monarch-card p-6 rounded-lg">
+                    <h3 class="text-xl mb-4 text-green-400">System Status</h3>
+                    <p class="text-4xl font-bold text-green-500">OPTIMAL</p>
+                </div>
+            </div>
+            <div class="mt-10 monarch-card p-8 rounded-lg">
+                <h3 class="text-2xl mb-6 font-orbitron">Manage Inventory</h3>
+                <p class="text-gray-400">Control the flow of mana... and currency.</p>
+                <!-- Admin controls would go here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- WhatsApp Float -->
+    <a href="https://wa.me/8760000000" class="whatsapp-float">
+        <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+            <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+    </a>
+
+    <script>
+        function checkAdmin() {
+            const adminPanel = document.getElementById('adminPanel');
+            if (window.location.hash === '#/7784Nexus') {
+                adminPanel.style.display = 'block';
+                document.body.style.overflow = 'hidden';
+            } else {
+                adminPanel.style.display = 'none';
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        window.addEventListener('hashchange', checkAdmin);
+        window.addEventListener('DOMContentLoaded', checkAdmin);
+    </script>
+</body>
+</html>
