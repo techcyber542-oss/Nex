@@ -30,7 +30,6 @@
             font-family: 'Rajdhani', sans-serif;
             overflow-x: hidden;
             margin: 0;
-            user-select: none;
             background-image:
                 radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 100%),
                 linear-gradient(rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.9) 100%);
@@ -250,6 +249,9 @@
                             <div class="flex border-b border-white/5 bg-black/40">
                                 <button onclick="switchTab('public')" id="tab-public" class="flex-1 py-5 text-xs font-black tracking-widest chat-tab-active transition-all uppercase italic">Global Broadcast</button>
                                 <button onclick="switchTab('private')" id="tab-private" class="flex-1 py-5 text-xs font-black tracking-widest text-gray-500 transition-all uppercase italic">Secure Direct Link</button>
+                                <button onclick="clearLogs()" class="px-6 border-l border-white/5 text-gray-600 hover:text-red-500 transition-all" title="Purge Logs">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
                             </div>
 
                             <!-- Chat Header -->
@@ -410,7 +412,36 @@
             'Apple TV+': '#FFFFFF', 'Disney+': '#006E99'
         };
 
+        const SHADOW_NAMES = ["Igris", "Tank", "Iron", "Kaisel", "Beru", "Tusk", "Greed", "Jima", "Bellion"];
+        function getShadowName(peerId) {
+            if (peerId === ADMIN_PEER_ID) return "MONARCH";
+            let hash = 0;
+            for (let i = 0; i < peerId.length; i++) {
+                hash = ((hash << 5) - hash) + peerId.charCodeAt(i);
+                hash |= 0;
+            }
+            return "Shadow Node: " + SHADOW_NAMES[Math.abs(hash) % SHADOW_NAMES.length];
+        }
+
         let isAdmin = false, peer, connections = {}, selectedBuyerId = null, currentTab = 'public';
+
+        // --- Audio ---
+        let audioCtx = null;
+        function playSystemSound() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
+        }
 
         // --- Data ---
         const gameData = [
@@ -629,11 +660,36 @@
             conn.on('open', () => {
                 connections[conn.peer] = conn;
                 if(isAdmin) registerBuyer(conn.peer);
-                addSystemMessage(`Node Integrated: ${conn.peer.substring(0,8)}`);
+                addSystemMessage(`Node Integrated: ${getShadowName(conn.peer)}`);
             });
             conn.on('data', (d) => {
-                if(d.type === 'chat') displayMessage(isAdmin ? conn.peer.substring(0,6) : 'MONARCH', d.msg, isAdmin ? 'buyer' : 'admin', d.tab);
+                if(d.type === 'chat') {
+                    // Anti-Spoofing: Derive identity from connection context
+                    const isFromAdmin = conn.peer === ADMIN_PEER_ID;
+                    const senderName = isFromAdmin ? 'MONARCH' : getShadowName(conn.peer);
+                    const role = isFromAdmin ? 'admin' : 'buyer';
+
+                    displayMessage(senderName, d.msg, role, d.tab);
+                    playSystemSound();
+
+                    if(isAdmin && d.tab === 'public') {
+                        // Relay Global Broadcasts to all nodes
+                        Object.values(connections).forEach(c => {
+                            if(c.peer !== conn.peer) {
+                                c.send({ type: 'chat', msg: d.msg, tab: 'public' });
+                            }
+                        });
+                    }
+                }
                 else if(d.type === 'typing') document.getElementById('typing-indicator').style.opacity = d.status ? 1 : 0;
+            });
+            conn.on('close', () => {
+                delete connections[conn.peer];
+                addSystemMessage(`Node Desynchronized: ${getShadowName(conn.peer)}`);
+                if(isAdmin) {
+                    const el = document.getElementById(`buyer-${conn.peer}`);
+                    if(el) el.classList.add('opacity-30', 'grayscale');
+                }
             });
         }
 
@@ -653,38 +709,71 @@
             lucide.createIcons();
         }
 
+        function saveChat(user, msg, role, tab) {
+            let history = JSON.parse(localStorage.getItem('monarch_chat_v2') || '[]');
+            history.push({ user, msg, role, tab, time: Date.now() });
+            if(history.length > 50) history.shift();
+            localStorage.setItem('monarch_chat_v2', JSON.stringify(history));
+        }
+
+        function loadChat() {
+            let history = JSON.parse(localStorage.getItem('monarch_chat_v2') || '[]');
+            history.forEach(h => displayMessage(h.user, h.msg, h.role, h.tab, false));
+        }
+
+        function clearLogs() {
+            localStorage.removeItem('monarch_chat_v2');
+            document.getElementById('public-messages').innerHTML = '';
+            document.getElementById('private-messages').innerHTML = '';
+            notify("Transmission logs purged.");
+        }
+
         function sendMessage() {
             const input = document.getElementById('chat-input'), msg = input.value; if(!msg) return;
             if(isAdmin) {
                 if(currentTab === 'private') {
                     if(selectedBuyerId && connections[selectedBuyerId]) {
-                        connections[selectedBuyerId].send({ type: 'chat', msg, tab: 'private' });
+                        connections[selectedBuyerId].send({ type: 'chat', msg, tab: 'private', senderName: 'MONARCH', role: 'admin' });
                         displayMessage('YOU', msg, 'admin', 'private');
                     }
                 } else {
-                    Object.values(connections).forEach(c => c.send({ type: 'chat', msg, tab: 'public' }));
+                    Object.values(connections).forEach(c => c.send({ type: 'chat', msg, tab: 'public', senderName: 'MONARCH', role: 'admin' }));
                     displayMessage('MONARCH', msg, 'admin', 'public');
                 }
             } else {
                 if(connections[ADMIN_PEER_ID]) {
-                    connections[ADMIN_PEER_ID].send({ type: 'chat', msg, tab: currentTab });
+                    const myShadowName = getShadowName(peer.id);
+                    connections[ADMIN_PEER_ID].send({ type: 'chat', msg, tab: currentTab, senderName: myShadowName, role: 'buyer' });
                     displayMessage('YOU', msg, 'buyer', currentTab);
                 } else notify("Monarch Offline.", "error");
             }
             input.value = '';
         }
 
-        function displayMessage(user, msg, role, tab) {
+        function displayMessage(user, msg, role, tab, save = true) {
             const container = document.getElementById(tab === 'public' ? 'public-messages' : 'private-messages');
-            const div = document.createElement('div'), isMe = user === 'YOU' || user === 'MONARCH';
-            div.className = `flex flex-col ${isMe ? 'items-end' : 'items-start'} group`;
-            div.innerHTML = `
-                <span class="text-[8px] font-black uppercase text-gray-500 mb-2 px-3 tracking-widest">${user}</span>
-                <div class="p-5 rounded-2xl max-w-[85%] border ${role === 'admin' ? 'bg-mana-blue/10 border-mana-blue/30 text-mana-blue shadow-[0_0_15px_rgba(0,212,255,0.1)]' : 'bg-white/5 border-white/10 text-white'} text-sm leading-relaxed">
-                    ${msg}
-                </div>`;
+            if (!container) return;
+            const div = document.createElement('div'), isMe = user === 'YOU' || (isAdmin && user === 'MONARCH') || (!isAdmin && user === 'MONARCH' && role === 'admin');
+            const alignment = (user === 'YOU' || (isAdmin && user === 'MONARCH')) ? 'items-end' : 'items-start';
+            div.className = `flex flex-col ${alignment} group mb-6`;
+
+            const glowClass = role === 'admin' ? 'border-mana-blue/30 text-mana-blue shadow-[0_0_15px_rgba(0,212,255,0.1)] bg-mana-blue/10' : 'border-white/10 text-white bg-white/5';
+
+            // XSS Prevention: Use textContent for the message body
+            const header = document.createElement('span');
+            header.className = "text-[8px] font-black uppercase text-gray-500 mb-2 px-3 tracking-widest";
+            header.textContent = user;
+
+            const bubble = document.createElement('div');
+            bubble.className = `p-5 rounded-2xl max-w-[85%] border ${glowClass} text-sm leading-relaxed backdrop-blur-md`;
+            bubble.textContent = msg;
+
+            div.appendChild(header);
+            div.appendChild(bubble);
+
             container.appendChild(div); container.scrollTop = container.scrollHeight;
-            gsap.from(div, { y: 20, opacity: 0, duration: 0.4 });
+            gsap.from(div, { x: alignment === 'items-end' ? 20 : -20, opacity: 0, duration: 0.5, ease: "power2.out" });
+            if(save) saveChat(user, msg, role, tab);
         }
 
         function addSystemMessage(msg) {
@@ -731,7 +820,7 @@
             if(r === 'S') document.getElementById('user-rank').classList.add('mana-text-glow');
         }
 
-        window.onload = () => { initThree(); startAuthTimer(); };
+        window.onload = () => { initThree(); startAuthTimer(); loadChat(); };
         document.getElementById('admin-code').addEventListener('keypress', (e) => { if(e.key === 'Enter') checkAdmin(); });
         document.getElementById('chat-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
     </script>
