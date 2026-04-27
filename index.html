@@ -424,6 +424,7 @@
         }
 
         let isAdmin = false, peer, connections = {}, selectedBuyerId = null, currentTab = 'public';
+        let bannedNodes = JSON.parse(localStorage.getItem('monarch_bans') || '[]');
 
         // --- Audio ---
         let audioCtx = null;
@@ -657,12 +658,33 @@
         }
 
         function setupConn(conn) {
+            if (isAdmin && bannedNodes.includes(conn.peer)) {
+                conn.on('open', () => {
+                    conn.send({ type: 'system', cmd: 'terminate', reason: 'Access Denied: Node Banned' });
+                    setTimeout(() => conn.close(), 500);
+                });
+                return;
+            }
             conn.on('open', () => {
                 connections[conn.peer] = conn;
                 if(isAdmin) registerBuyer(conn.peer);
                 addSystemMessage(`Node Integrated: ${getShadowName(conn.peer)}`);
             });
             conn.on('data', (d) => {
+                if (d.type === 'system') {
+                    if (d.cmd === 'terminate') {
+                        document.body.innerHTML = `<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000; color:#ff003c; font-family:'Orbitron'; text-align:center; padding:20px;">
+                            <h1 style="font-size:4rem; margin-bottom:20px;">CONNECTION SEVERED</h1>
+                            <p style="letter-spacing:0.5em; opacity:0.7;">${d.reason || 'ADMINISTRATIVE SHUTDOWN'}</p>
+                        </div>`;
+                        if (peer) peer.destroy();
+                    } else if (d.cmd === 'rank_update') {
+                        localStorage.setItem('shadow-rank', d.rank);
+                        assignRank();
+                        notify(`Rank Recalibrated: Level.${d.rank}`);
+                    }
+                    return;
+                }
                 if(d.type === 'chat') {
                     // Anti-Spoofing: Derive identity from connection context
                     const isFromAdmin = conn.peer === ADMIN_PEER_ID;
@@ -795,19 +817,72 @@
 
         document.getElementById('terminal-input').addEventListener('keypress', (e) => {
             if(e.key === 'Enter') {
-                const cmd = e.target.value, out = document.getElementById('terminal-output');
-                const line = document.createElement('div'); line.innerHTML = `<span class="text-white">> ${cmd}</span>`;
-                const [c, ...args] = cmd.split(' ');
+                const input = e.target.value.trim();
+                if (!input) return;
+                const out = document.getElementById('terminal-output');
+                const line = document.createElement('div'); line.innerHTML = `<span class="text-white">> ${input}</span>`;
+                const [c, ...args] = input.split(' ');
                 let res = '';
-                if(c === '/announce') {
-                    Object.values(connections).forEach(x => x.send({ type: 'chat', msg: `[OS BROADCAST]: ${args.join(' ')}`, tab: 'public' }));
-                    displayMessage('SYSTEM', args.join(' '), 'admin', 'public');
-                    res = 'Broadcast relay active.';
-                } else if(c === '/clear') {
-                    document.getElementById('public-messages').innerHTML = ''; res = 'Feed cleared.';
-                } else if(c === '/status') {
-                    res = `Nodes: ${Object.keys(connections).length} | Peer: ${peer.id}`;
-                } else res = 'Command unknown.';
+
+                switch(c) {
+                    case '/announce':
+                        const msg = args.join(' ');
+                        Object.values(connections).forEach(x => x.send({ type: 'chat', msg: `[OS BROADCAST]: ${msg}`, tab: 'public' }));
+                        displayMessage('SYSTEM', msg, 'admin', 'public');
+                        res = 'Broadcast relay active.';
+                        break;
+                    case '/clear':
+                        document.getElementById('public-messages').innerHTML = '';
+                        res = 'Feed cleared.';
+                        break;
+                    case '/status':
+                        res = `Nodes: ${Object.keys(connections).length} | Peer: ${peer.id} | Banned: ${bannedNodes.length}`;
+                        break;
+                    case '/list':
+                        res = Object.keys(connections).map(id => `[${id.substring(0,8)}] ${getShadowName(id)}`).join(', ') || 'No active nodes.';
+                        break;
+                    case '/kick':
+                        const targetKick = args[0];
+                        if (connections[targetKick]) {
+                            connections[targetKick].send({ type: 'system', cmd: 'terminate', reason: 'Kicked by Monarch' });
+                            setTimeout(() => connections[targetKick].close(), 500);
+                            res = `Node ${targetKick} kicked.`;
+                        } else res = 'Node not found.';
+                        break;
+                    case '/ban':
+                        const targetBan = args[0];
+                        if (targetBan) {
+                            if (!bannedNodes.includes(targetBan)) {
+                                bannedNodes.push(targetBan);
+                                localStorage.setItem('monarch_bans', JSON.stringify(bannedNodes));
+                            }
+                            if (connections[targetBan]) {
+                                connections[targetBan].send({ type: 'system', cmd: 'terminate', reason: 'Banned by Monarch' });
+                                setTimeout(() => connections[targetBan].close(), 500);
+                            }
+                            res = `Node ${targetBan} banned.`;
+                        } else res = 'Usage: /ban <peer_id>';
+                        break;
+                    case '/unban':
+                        bannedNodes = bannedNodes.filter(id => id !== args[0]);
+                        localStorage.setItem('monarch_bans', JSON.stringify(bannedNodes));
+                        res = `Node ${args[0]} unbanned.`;
+                        break;
+                    case '/rank':
+                        const [rTarget, rVal] = args;
+                        if (connections[rTarget] && ['S','A','B','C','D','E'].includes(rVal)) {
+                            connections[rTarget].send({ type: 'system', cmd: 'rank_update', rank: rVal });
+                            res = `Rank for ${rTarget} set to ${rVal}.`;
+                        } else res = 'Usage: /rank <peer_id> <S|A|B|C|D|E>';
+                        break;
+                    case '/shutdown':
+                        Object.values(connections).forEach(x => x.send({ type: 'system', cmd: 'terminate', reason: 'Emergency System Shutdown' }));
+                        res = 'Broadcasted shutdown signal to all nodes.';
+                        break;
+                    default:
+                        res = 'Command unknown. [ /announce, /clear, /status, /list, /kick, /ban, /unban, /rank, /shutdown ]';
+                }
+
                 const rLine = document.createElement('div'); rLine.innerText = res; out.appendChild(line); out.appendChild(rLine);
                 out.scrollTop = out.scrollHeight; e.target.value = '';
             }
@@ -816,8 +891,10 @@
         function assignRank() {
             let r = localStorage.getItem('shadow-rank') || ['E', 'D', 'C', 'B', 'A', 'S'][Math.floor(Math.random()*6)];
             localStorage.setItem('shadow-rank', r);
-            document.getElementById('user-rank').innerText = r;
-            if(r === 'S') document.getElementById('user-rank').classList.add('mana-text-glow');
+            const el = document.getElementById('user-rank');
+            el.innerText = r;
+            if(r === 'S') el.classList.add('mana-text-glow');
+            else el.classList.remove('mana-text-glow');
         }
 
         window.onload = () => { initThree(); startAuthTimer(); loadChat(); };
