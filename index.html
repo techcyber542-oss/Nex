@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MONARCH OS | HYPERION INTERFACE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --mana-blue: #00d4ff;
+            --mana-purple: #9d00ff;
+            --system-bg: #020204;
+            --system-border: rgba(0, 212, 255, 0.3);
+            --glitch-red: #ff003c;
+            --glitch-blue: #00f0ff;
+            --terminal-green: #00ff41;
+        }
+
+        * { cursor: crosshair; }
+
+        body {
+            background-color: var(--system-bg);
+            color: #e0e0e0;
+            font-family: 'Rajdhani', sans-serif;
+            overflow-x: hidden;
+            margin: 0;
+            background-image:
+                radial-gradient(circle at 50% 50%, rgba(0, 212, 255, 0.05) 0%, transparent 100%),
+                linear-gradient(rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.9) 100%);
+        }
+
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        /* Scanning Line Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.1;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            opacity: 0.1;
+            z-index: 1001;
+            pointer-events: none;
+            animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: -10% }
+            100% { top: 110% }
+        }
+
+        .glitch { position: relative; display: inline-block; }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.8;
+        }
+        .glitch::before { color: var(--glitch-red); z-index: -1; animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both infinite; }
+        .glitch::after { color: var(--glitch-blue); z-index: -2; animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) reverse both infinite; }
+
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
+        }
+
+        .mana-glow { box-shadow: 0 0 20px rgba(0, 212, 255, 0.2), inset 0 0 20px rgba(0, 212, 255, 0.1); border: 1px solid var(--system-border); }
+        .mana-text-glow { text-shadow: 0 0 10px var(--mana-blue), 0 0 20px var(--mana-blue); }
+        .glass { background: rgba(10, 10, 15, 0.7); backdrop-filter: blur(15px); border: 1px solid rgba(255, 255, 255, 0.05); }
+        .vortex-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -2; }
+
+        .border-glow { position: relative; }
+        .border-glow::after {
+            content: '';
+            position: absolute;
+            inset: -2px;
+            background: linear-gradient(45deg, transparent, var(--mana-blue), transparent, var(--mana-purple), transparent);
+            background-size: 400% 400%;
+            z-index: -1;
+            animation: borderRotate 4s linear infinite;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .border-glow:hover::after { opacity: 1; }
+
+        @keyframes borderRotate {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--mana-blue); }
+
+        .terminal-text { font-family: 'Courier New', Courier, monospace; color: var(--terminal-green); text-shadow: 0 0 5px var(--terminal-green); }
+        .chat-tab-active { color: var(--mana-blue) !important; border-bottom: 2px solid var(--mana-blue); background: rgba(0, 212, 255, 0.05); }
+
+        .system-btn {
+            position: relative; overflow: hidden; transition: all 0.3s;
+        }
+        .system-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .system-btn:hover::before { left: 100%; }
+
+        #admin-overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .gate-door { position: absolute; width: 50%; height: 100%; background: #050505; border: 1px solid var(--mana-blue); transition: all 1s cubic-bezier(0.8, 0, 0.2, 1); }
+        .gate-left { left: 0; border-right: 2px solid var(--mana-blue); }
+        .gate-right { right: 0; border-left: 2px solid var(--mana-blue); }
+        .gate-open .gate-left { transform: translateX(-100%); }
+        .gate-open .gate-right { transform: translateX(100%); }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="scanline"></div>
+    <div id="vortex-canvas" class="vortex-container"></div>
+    <div id="notifications" class="fixed top-8 right-8 z-[10000] space-y-4"></div>
+
+    <!-- Admin "Gate" Entry -->
+    <div id="admin-overlay" class="flex flex-col items-center justify-center overflow-hidden">
+        <div id="gate-l" class="gate-door gate-left"></div>
+        <div id="gate-r" class="gate-door gate-right"></div>
+
+        <div id="auth-box" class="relative z-10 glass p-10 rounded-lg mana-glow max-w-md w-full text-center border-mana-blue/40">
+            <h2 class="text-3xl font-black mb-2 font-orbitron tracking-tighter text-white uppercase italic">MONARCH <span class="text-mana-blue">OS</span></h2>
+            <div class="h-1 w-full bg-mana-blue/20 mb-6 relative">
+                <div id="auth-progress" class="absolute h-full bg-mana-blue w-full top-0 left-0 origin-left"></div>
+            </div>
+            <p class="text-gray-400 text-xs uppercase tracking-widest mb-6 italic">Synchronizing with Shadow Realm...</p>
+            <input type="password" id="admin-code" class="w-full bg-black/80 border border-mana-blue/30 p-4 rounded-md mb-6 focus:outline-none focus:border-mana-blue text-center tracking-[1em] text-mana-blue font-bold text-xl transition-all" placeholder="••••••••">
+            <div id="admin-timer" class="text-mana-blue font-black mb-6 text-3xl font-orbitron">25</div>
+            <div class="flex gap-4">
+                <button onclick="checkAdmin()" class="flex-1 bg-mana-blue/10 hover:bg-mana-blue/30 border border-mana-blue text-mana-blue p-4 rounded font-black tracking-widest transition-all system-btn">CONNECT</button>
+                <button onclick="closeAdminPrompt()" class="flex-1 bg-white/5 hover:bg-white/10 p-4 rounded text-gray-500 font-bold transition-all">GUEST</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application UI -->
+    <div id="main-ui" class="hidden opacity-0">
+        <!-- Floating HUD -->
+        <header class="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center pointer-events-none">
+            <div class="flex items-center gap-6 pointer-events-auto">
+                <div class="relative group">
+                    <svg width="60" height="60" viewBox="0 0 100 100" class="drop-shadow-[0_0_10px_rgba(0,212,255,0.8)]">
+                        <path d="M50 5 L95 25 L95 75 L50 95 L5 75 L5 25 Z" fill="none" stroke="var(--mana-blue)" stroke-width="2">
+                            <animate attributeName="stroke-dasharray" from="0,400" to="400,0" dur="4s" repeatCount="indefinite" />
+                        </path>
+                        <path d="M30 45 L50 25 L70 45 L50 85 Z" fill="var(--mana-blue)" opacity="0.6">
+                            <animate attributeName="opacity" values="0.3;0.9;0.3" dur="2s" repeatCount="indefinite" />
+                        </path>
+                        <rect x="45" y="45" width="10" height="10" fill="white" class="animate-ping" />
+                    </svg>
+                </div>
+                <div class="flex flex-col">
+                    <h1 class="text-2xl font-black font-orbitron tracking-tighter leading-none text-white uppercase italic">MONARCH <span class="text-mana-blue">OS</span></h1>
+                    <span class="text-[10px] text-mana-blue font-bold tracking-[0.4em] uppercase">Hyperion Interface v9.0</span>
+                </div>
+            </div>
+
+            <nav class="hidden lg:flex gap-12 font-bold text-xs tracking-[0.3em] uppercase pointer-events-auto">
+                <a href="#games" class="text-gray-400 hover:text-mana-blue transition-all relative group">GAMES<span class="absolute -bottom-1 left-0 w-0 h-px bg-mana-blue transition-all group-hover:w-full"></span></a>
+                <a href="#apps" class="text-gray-400 hover:text-mana-blue transition-all relative group">APPS<span class="absolute -bottom-1 left-0 w-0 h-px bg-mana-blue transition-all group-hover:w-full"></span></a>
+                <a href="#chat" class="text-gray-400 hover:text-mana-blue transition-all relative group">TERMINAL<span class="absolute -bottom-1 left-0 w-0 h-px bg-mana-blue transition-all group-hover:w-full"></span></a>
+            </nav>
+
+            <div class="pointer-events-auto flex items-center gap-6">
+                <div id="user-rank-box" class="glass px-6 py-2 rounded border-mana-blue/30 flex flex-col items-end">
+                    <span class="text-[8px] text-gray-500 uppercase font-black tracking-widest">Level.1 Awakening</span>
+                    <span id="user-rank" class="text-mana-blue font-black text-2xl font-orbitron mt-1">E</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero -->
+        <section class="min-h-screen flex flex-col items-center justify-center relative px-6 overflow-hidden">
+            <div id="hero-title-wrap" class="text-center z-10">
+                <h2 data-text="ARISE." class="glitch text-8xl md:text-[14rem] font-black font-orbitron leading-none text-white tracking-tighter mb-4 italic">ARISE.</h2>
+                <div class="flex items-center justify-center gap-8 mb-12">
+                    <div class="h-px w-24 bg-gradient-to-r from-transparent to-mana-blue"></div>
+                    <p class="text-mana-blue font-bold tracking-[0.6em] text-xs uppercase italic">Shadow Market Integration</p>
+                    <div class="h-px w-24 bg-gradient-to-l from-transparent to-mana-blue"></div>
+                </div>
+                <div class="flex flex-wrap justify-center gap-8">
+                    <div class="glass px-10 py-5 rounded-xl border-mana-blue/20 group hover:border-mana-blue/60 transition-all flex items-center gap-4">
+                        <i data-lucide="map-pin" class="text-mana-blue w-6"></i>
+                        <div class="text-left">
+                            <p class="text-[10px] text-gray-500 font-bold uppercase">Sector</p>
+                            <p class="text-sm font-bold text-white uppercase tracking-widest">May Pen, Clarendon</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <main class="max-w-7xl mx-auto px-6 space-y-60 pb-60">
+            <!-- Games Grid -->
+            <section id="games" class="reveal">
+                <div class="flex items-end justify-between mb-20">
+                    <div>
+                        <h3 class="text-5xl font-black font-orbitron text-white italic uppercase">SHADOW <span class="text-mana-blue">RESERVE</span></h3>
+                        <p class="text-gray-500 font-bold tracking-[0.3em] mt-3 uppercase text-xs">Curated In-Game Assets</p>
+                    </div>
+                </div>
+                <div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10"></div>
+            </section>
+
+            <!-- Apps Grid -->
+            <section id="apps" class="reveal">
+                <div class="flex items-end justify-between mb-20">
+                    <div>
+                        <h3 class="text-5xl font-black font-orbitron text-white italic uppercase">SYSTEM <span class="text-mana-purple">LINK</span></h3>
+                        <p class="text-gray-500 font-bold tracking-[0.3em] mt-3 uppercase text-xs">Premium Encryption Keys</p>
+                    </div>
+                </div>
+                <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"></div>
+            </section>
+
+            <!-- Futuristic Chat Hub -->
+            <section id="chat" class="reveal">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
+                    <div class="lg:col-span-3">
+                        <div class="glass rounded-3xl overflow-hidden mana-glow border-mana-blue/20 flex flex-col h-[800px] relative">
+                            <!-- Tabs -->
+                            <div class="flex border-b border-white/5 bg-black/40">
+                                <button onclick="switchTab('public')" id="tab-public" class="flex-1 py-5 text-xs font-black tracking-widest chat-tab-active transition-all uppercase italic">Global Broadcast</button>
+                                <button onclick="switchTab('private')" id="tab-private" class="flex-1 py-5 text-xs font-black tracking-widest text-gray-500 transition-all uppercase italic">Secure Direct Link</button>
+                                <button onclick="clearLogs()" class="px-6 border-l border-white/5 text-gray-600 hover:text-red-500 transition-all" title="Purge Logs">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+
+                            <!-- Chat Header -->
+                            <div class="px-8 py-5 border-b border-white/5 flex justify-between items-center bg-black/20">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 rounded-xl bg-mana-blue/5 border border-mana-blue/20 flex items-center justify-center">
+                                        <i data-lucide="shield" id="chat-icon" class="text-mana-blue w-6 h-6"></i>
+                                    </div>
+                                    <div>
+                                        <h4 id="chat-header-title" class="font-black font-orbitron text-white tracking-tight uppercase">Channel: Global</h4>
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                                            <p id="chat-status" class="text-[9px] text-mana-blue font-bold uppercase tracking-[0.2em]">Link Stable</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="typing-indicator" class="text-[10px] terminal-text italic opacity-0 transition-opacity">Node typing...</div>
+                            </div>
+
+                            <!-- Messages Area -->
+                            <div class="flex-1 relative overflow-hidden bg-[rgba(0,0,0,0.4)]">
+                                <div id="public-messages" class="absolute inset-0 overflow-y-auto p-10 space-y-8 scroll-smooth"></div>
+                                <div id="private-messages" class="absolute inset-0 overflow-y-auto p-10 space-y-8 translate-x-full transition-transform duration-500 bg-black/60 scroll-smooth"></div>
+                            </div>
+
+                            <!-- Input Area -->
+                            <div class="p-8 border-t border-white/5 bg-black/80 relative">
+                                <!-- Admin Terminal Overlay -->
+                                <div id="admin-terminal" class="hidden absolute bottom-full left-0 w-full glass border-t border-mana-blue/30 p-6 z-10">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <span class="text-[10px] font-black text-mana-blue uppercase italic">Monarch Terminal v1.0</span>
+                                        <button onclick="toggleTerminal()" class="text-gray-500 hover:text-white transition-all"><i data-lucide="x" class="w-4"></i></button>
+                                    </div>
+                                    <div id="terminal-output" class="text-[11px] terminal-text h-40 overflow-y-auto mb-4 space-y-1"></div>
+                                    <div class="flex gap-4">
+                                        <span class="terminal-text text-xs">root@hyperion:~$</span>
+                                        <input type="text" id="terminal-input" class="flex-1 bg-transparent border-none focus:outline-none terminal-text text-xs" placeholder="enter command...">
+                                    </div>
+                                </div>
+
+                                <div class="relative flex items-center gap-4">
+                                    <button id="terminal-toggle-btn" onclick="toggleTerminal()" class="hidden w-16 h-16 glass rounded-2xl border border-mana-blue/20 flex items-center justify-center hover:bg-mana-blue/10 transition-all system-btn">
+                                        <i data-lucide="terminal" class="text-mana-blue w-7"></i>
+                                    </button>
+                                    <div class="relative flex-1">
+                                        <input type="text" id="chat-input" class="w-full bg-white/5 border border-white/10 rounded-2xl px-8 py-6 focus:outline-none focus:border-mana-blue text-sm placeholder:text-gray-600 transition-all pr-40" placeholder="Type transmission...">
+                                        <button onclick="sendMessage()" class="absolute right-3 top-3 bottom-3 bg-mana-blue text-black font-black px-8 rounded-xl hover:bg-white transition-all text-xs tracking-widest system-btn uppercase italic font-orbitron">Execute</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Side Info / Admin Controls -->
+                    <div class="space-y-10">
+                        <div id="side-panel" class="glass rounded-3xl p-10 border-mana-blue/20 relative overflow-hidden h-full flex flex-col min-h-[600px]">
+                            <div class="absolute top-0 left-0 w-1 h-full bg-mana-blue shadow-[0_0_15px_#00d4ff]"></div>
+
+                            <!-- Admin View -->
+                            <div id="admin-controls" class="hidden flex-1 flex flex-col">
+                                <h3 class="text-2xl font-orbitron font-black text-mana-blue mb-10 uppercase italic">Command Hub</h3>
+                                <div class="grid grid-cols-2 gap-4 mb-10">
+                                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                                        <p class="text-[9px] text-gray-500 uppercase font-black mb-1">Active Nodes</p>
+                                        <p id="total-nodes" class="text-2xl font-black text-white">0</p>
+                                    </div>
+                                    <div class="bg-white/5 p-4 rounded-2xl border border-white/5">
+                                        <p class="text-[9px] text-gray-500 uppercase font-black mb-1">System Health</p>
+                                        <p class="text-2xl font-black text-green-500">100%</p>
+                                    </div>
+                                </div>
+                                <p class="text-[10px] text-gray-500 uppercase font-black mb-4 px-2">Synchronized Nodes</p>
+                                <div id="active-buyers-list" class="flex-1 overflow-y-auto space-y-3 pr-2 scroll-smooth"></div>
+                            </div>
+
+                            <!-- User View -->
+                            <div id="user-side-info" class="space-y-10">
+                                <h3 class="text-2xl font-orbitron font-black text-mana-blue mb-10 uppercase italic">Node Status</h3>
+                                <div class="space-y-8">
+                                    <div>
+                                        <p class="text-[10px] text-gray-500 font-bold uppercase mb-3 px-1">Shadow Identifier</p>
+                                        <p id="my-id" class="text-xs font-mono text-mana-blue bg-mana-blue/5 p-5 rounded-2xl border border-mana-blue/10 break-all leading-relaxed shadow-inner">Initializing...</p>
+                                    </div>
+                                    <div class="p-6 bg-white/5 rounded-2xl border border-white/5 space-y-4">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] text-gray-400 uppercase font-bold">Network Sector</span>
+                                            <span class="text-xs text-white font-black">May Pen</span>
+                                        </div>
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-[10px] text-gray-400 uppercase font-bold">Encryption</span>
+                                            <span class="text-xs text-mana-blue font-black uppercase tracking-widest">Active</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="py-32 px-6 border-t border-white/5 text-center bg-black/40 relative overflow-hidden">
+            <div class="absolute inset-0 opacity-5 pointer-events-none" style="background-image: radial-gradient(var(--mana-blue) 1px, transparent 1px); background-size: 30px 30px;"></div>
+            <h5 class="text-3xl font-black font-orbitron text-white mb-6 uppercase italic tracking-widest">MONARCH <span class="text-mana-blue">OS</span></h5>
+            <p class="text-xs text-gray-500 tracking-[0.5em] uppercase mb-12">Hyperion Interface Protocol // May Pen, Clarendon</p>
+            <div class="flex justify-center gap-10 text-gray-500 mb-12">
+                <i data-lucide="shield-check" class="w-6 h-6 hover:text-mana-blue transition-all cursor-pointer"></i>
+                <i data-lucide="zap" class="w-6 h-6 hover:text-mana-blue transition-all cursor-pointer"></i>
+                <i data-lucide="lock" class="w-6 h-6 hover:text-mana-blue transition-all cursor-pointer"></i>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Modals -->
+    <div id="order-modal" class="fixed inset-0 bg-black/95 backdrop-blur-3xl z-[1000] hidden flex items-center justify-center p-6">
+        <div class="glass max-w-2xl w-full rounded-3xl overflow-hidden mana-glow border-mana-blue/40 relative shadow-[0_0_100px_rgba(0,212,255,0.2)]">
+            <div class="p-10 border-b border-white/5 flex justify-between items-center bg-white/5">
+                <div>
+                    <h3 id="modal-title" class="text-3xl font-black font-orbitron text-white uppercase italic tracking-tighter">Transmission Setup</h3>
+                    <p class="text-[10px] text-mana-blue font-bold tracking-[0.3em] uppercase mt-1">Securing Item Link...</p>
+                </div>
+                <button onclick="closeModal()" class="w-12 h-12 rounded-2xl glass border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all hover:rotate-90">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+            <div class="p-10 space-y-10">
+                <div class="flex items-center gap-8 p-8 bg-mana-blue/5 rounded-2xl border border-mana-blue/20 shadow-inner">
+                    <div id="modal-logo" class="w-24 h-24"></div>
+                    <div>
+                        <p id="modal-package-name" class="text-3xl font-black text-white italic uppercase tracking-tighter"></p>
+                        <p id="modal-package-price" class="text-mana-blue text-5xl font-black font-orbitron mt-2"></p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <input type="text" id="order-name" placeholder="Agent Name" class="w-full bg-black/60 border border-white/10 rounded-2xl p-5 focus:outline-none focus:border-mana-blue text-white transition-all font-bold tracking-widest placeholder:text-gray-700">
+                    <input type="text" id="order-id" placeholder="In-game ID / Node ID" class="w-full bg-black/60 border border-white/10 rounded-2xl p-5 focus:outline-none focus:border-mana-blue text-white transition-all font-bold tracking-widest placeholder:text-gray-700">
+                </div>
+                <textarea id="order-notes" placeholder="Additional Directives..." class="w-full bg-black/60 border border-white/10 rounded-2xl p-5 focus:outline-none focus:border-mana-blue text-white transition-all h-32 font-bold placeholder:text-gray-700"></textarea>
+                <button onclick="confirmOrder()" class="w-full bg-mana-blue text-black font-black py-8 rounded-2xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_50px_rgba(0,212,255,0.4)] font-orbitron tracking-widest text-2xl uppercase italic system-btn">Initialize Link</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- WA Button -->
+    <a href="https://wa.me/16582013679" target="_blank" class="fixed bottom-10 right-10 z-[500] w-20 h-20 bg-[#25D366] rounded-3xl flex items-center justify-center shadow-[0_0_40px_rgba(37,211,102,0.5)] hover:scale-110 active:scale-90 transition-all group overflow-hidden border-2 border-white/20">
+        <i data-lucide="message-circle" class="text-white w-10 h-10"></i>
+        <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+    </a>
+
+    <script>
+        lucide.createIcons();
+        gsap.registerPlugin(ScrollTrigger);
+
+        const ADMIN_PEER_ID = 'ShadowMonarch_Admin_7784_Nexus';
+        const APP_COLOR_MAP = {
+            'Spotify': '#1DB954', 'Apple Music': '#fc3c44', 'Crunchyroll': '#F47521',
+            'Amazon Prime': '#00A8E1', 'YouTube Premium': '#FF0000', 'YT Music': '#FF0000',
+            'Apple TV+': '#FFFFFF', 'Disney+': '#006E99'
+        };
+
+        const SHADOW_NAMES = ["Igris", "Tank", "Iron", "Kaisel", "Beru", "Tusk", "Greed", "Jima", "Bellion"];
+        function getShadowName(peerId) {
+            if (peerId === ADMIN_PEER_ID) return "MONARCH";
+            let hash = 0;
+            for (let i = 0; i < peerId.length; i++) {
+                hash = ((hash << 5) - hash) + peerId.charCodeAt(i);
+                hash |= 0;
+            }
+            return "Shadow Node: " + SHADOW_NAMES[Math.abs(hash) % SHADOW_NAMES.length];
+        }
+
+        let isAdmin = false, peer, connections = {}, selectedBuyerId = null, currentTab = 'public';
+        let bannedNodes = JSON.parse(localStorage.getItem('monarch_bans') || '[]');
+
+        // --- Audio ---
+        let audioCtx = null;
+        function playSystemSound() {
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                if (audioCtx.state === 'suspended') audioCtx.resume();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(880, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(440, audioCtx.currentTime + 0.1);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.1);
+                osc.connect(gain); gain.connect(audioCtx.destination);
+                osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+            } catch(e) {}
+        }
+
+        // --- Data ---
+        const gameData = [
+            { id: 'roblox', name: "Roblox", logo: 'https://cdn.simpleicons.org/roblox/white', packages: [{ name: "400 Robux", price: "1,000" }, { name: "800 Robux", price: "2,000" }, { name: "1,700 Robux", price: "4,000" }, { name: "4,500 Robux", price: "10,000" }, { name: "10,000 Robux", price: "20,000" }, { name: "22,500 Robux", price: "40,000" }] },
+            { id: 'freefire', name: "Free Fire", logo: 'https://cdn.simpleicons.org/freefire/white', packages: [{ name: "110 Diamonds", price: "350" }, { name: "231 Diamonds", price: "700" }, { name: "583 Diamonds", price: "1,600" }, { name: "1,188 Diamonds", price: "3,200" }, { name: "2,420 Diamonds", price: "6,400" }, { name: "5,600 Diamonds", price: "14,000" }] },
+            { id: 'pubg', name: "PUBG Mobile", logo: 'https://cdn.simpleicons.org/pubg/white', packages: [{ name: "60 UC", price: "250" }, { name: "325 UC", price: "1,200" }, { name: "660 UC", price: "2,400" }, { name: "1,800 UC", price: "6,000" }, { name: "3,850 UC", price: "11,500" }, { name: "8,100 UC", price: "23,000" }] },
+            { id: 'codm', name: "COD Mobile", logo: 'https://cdn.simpleicons.org/activision/white', packages: [{ name: "80 CP", price: "250" }, { name: "420 CP", price: "1,200" }, { name: "880 CP", price: "2,400" }, { name: "2,400 CP", price: "6,000" }, { name: "5,000 CP", price: "11,500" }, { name: "10,000 CP", price: "22,000" }] },
+            { id: 'mlbb', name: "Mobile Legends", logo: 'https://cdn.simpleicons.org/mobilelegends/white', packages: [{ name: "11 Diamonds", price: "150" }, { name: "56 Diamonds", price: "350" }, { name: "278 Diamonds", price: "1,500" }, { name: "571 Diamonds", price: "3,000" }, { name: "1,167 Diamonds", price: "6,000" }, { name: "2,398 Diamonds", price: "12,000" }] },
+            { id: 'bloodstrike', name: "Blood Strike", logo: 'https://cdn.simpleicons.org/target/white', packages: [{ name: "100 Gold", price: "300" }, { name: "500 Gold", price: "1,400" }, { name: "1,000 Gold", price: "2,700" }, { name: "2,500 Gold", price: "6,500" }, { name: "5,000 Gold", price: "12,000" }] }
+        ];
+
+        const appData = [
+            { name: "Spotify Premium", icon: 'spotify', packages: [{ name: "Individual", price: "1,200" }, { name: "Family", price: "2,000" }] },
+            { name: "Apple Music", icon: 'applemusic', packages: [{ name: "Individual", price: "1,200" }, { name: "Family", price: "2,000" }] },
+            { name: "Crunchyroll", icon: 'crunchyroll', packages: [{ name: "Fan", price: "1,400" }, { name: "Mega Fan", price: "1,800" }] },
+            { name: "YouTube Premium", icon: 'youtube', packages: [{ name: "Individual", price: "1,500" }, { name: "Family", price: "2,500" }] },
+            { name: "YT Music", icon: 'youtubemusic', packages: [{ name: "Individual", price: "1,200" }] },
+            { name: "Netflix", icon: 'netflix', packages: [{ name: "Basic", price: "2,000" }, { name: "Standard", price: "2,800" }, { name: "Premium", price: "3,500" }] },
+            { name: "Amazon Prime", icon: 'amazonprime', packages: [{ name: "Monthly", price: "2,500" }] },
+            { name: "Disney+", icon: 'disneyplus', packages: [{ name: "Basic", price: "1,500" }, { name: "Premium", price: "2,400" }] },
+            { name: "Apple TV+", icon: 'appletv', packages: [{ name: "Monthly", price: "1,500" }] }
+        ];
+
+        // --- Three.js ---
+        let scene, camera, renderer, starGeo, particles;
+        function initThree() {
+            scene = new THREE.Scene();
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.z = 1; camera.rotation.x = Math.PI/2;
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            document.getElementById('vortex-canvas').appendChild(renderer.domElement);
+
+            starGeo = new THREE.BufferGeometry();
+            const posArr = [], velArr = [];
+            for(let i=0; i<8000; i++) {
+                posArr.push(Math.random() * 600 - 300, Math.random() * 600 - 300, Math.random() * 600 - 300);
+                velArr.push(0);
+            }
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(posArr, 3));
+            starGeo.setAttribute('velocity', new THREE.Float32BufferAttribute(velArr, 1));
+
+            let sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
+            let mat = new THREE.PointsMaterial({ color: 0x00d4ff, size: 0.5, map: sprite, transparent: true, blending: THREE.AdditiveBlending });
+            particles = new THREE.Points(starGeo, mat);
+            scene.add(particles);
+            animateThree();
+        }
+
+        function animateThree() {
+            const positions = starGeo.attributes.position.array;
+            for(let i=1; i<positions.length; i+=3) {
+                positions[i] -= 0.6;
+                if(positions[i] < -300) positions[i] = 300;
+            }
+            starGeo.attributes.position.needsUpdate = true;
+            particles.rotation.y += 0.0015;
+            renderer.render(scene, camera);
+            requestAnimationFrame(animateThree);
+        }
+
+        // --- Core ---
+        let timeRemaining = 25;
+        function startAuthTimer() {
+            const timer = setInterval(() => {
+                timeRemaining--;
+                document.getElementById('admin-timer').innerText = timeRemaining;
+                gsap.to('#auth-progress', { scaleX: timeRemaining / 25, duration: 1, ease: 'linear' });
+                if (timeRemaining <= 0) { clearInterval(timer); closeAdminPrompt(); }
+            }, 1000);
+        }
+
+        function checkAdmin() {
+            if (document.getElementById('admin-code').value === 'TheTrueShadowMonarch') {
+                isAdmin = true;
+                notify("System Awakened. Welcome back, Monarch.");
+                closeAdminPrompt();
+            } else {
+                gsap.to('#auth-box', { x: [-10, 10, -10, 10, 0], duration: 0.4 });
+                document.getElementById('admin-code').value = '';
+                notify("Verification Failed.", "error");
+            }
+        }
+
+        function closeAdminPrompt() {
+            document.getElementById('admin-overlay').classList.add('gate-open');
+            setTimeout(() => {
+                document.getElementById('admin-overlay').style.display = 'none';
+                const main = document.getElementById('main-ui');
+                main.classList.remove('hidden');
+                gsap.to(main, { opacity: 1, duration: 1 });
+                if(isAdmin) {
+                    document.getElementById('admin-controls').classList.remove('hidden');
+                    document.getElementById('user-side-info').classList.add('hidden');
+                    document.getElementById('terminal-toggle-btn').classList.remove('hidden');
+                }
+                initAnimations(); initPeer(); assignRank(); renderCards();
+            }, 1000);
+        }
+
+        function initAnimations() {
+            gsap.from(".reveal", { scrollTrigger: { trigger: ".reveal", start: "top 80%" }, y: 100, opacity: 0, duration: 1.2, stagger: 0.4, ease: "expo.out" });
+            gsap.from("#hero-title-wrap", { scale: 0.7, opacity: 0, duration: 2, ease: "expo.out" });
+        }
+
+        function notify(msg, type = 'info') {
+            const container = document.getElementById('notifications');
+            const el = document.createElement('div');
+            el.className = `glass border-l-4 ${type === 'error' ? 'border-red-500' : 'border-mana-blue'} p-6 w-80 shadow-2xl flex items-start gap-4 transition-all duration-500`;
+            el.innerHTML = `
+                <i data-lucide="${type === 'error' ? 'alert-triangle' : 'zap'}" class="w-5 h-5 mt-1 ${type === 'error' ? 'text-red-500' : 'text-mana-blue'}"></i>
+                <div>
+                    <p class="text-[9px] font-black uppercase text-gray-500 tracking-widest">System Protocol</p>
+                    <p class="text-xs font-bold text-white mt-1">${msg}</p>
+                </div>
+            `;
+            container.appendChild(el); lucide.createIcons();
+            gsap.fromTo(el, { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.6, ease: "back.out" });
+            setTimeout(() => { gsap.to(el, { x: 100, opacity: 0, duration: 0.5, onComplete: () => el.remove() }); }, 6000);
+        }
+
+        function renderCards() {
+            const gg = document.getElementById('games-grid'), ag = document.getElementById('apps-grid');
+            gameData.forEach(g => {
+                const card = document.createElement('div');
+                card.className = 'card-wrap group';
+                card.innerHTML = `
+                    <div class="glass p-8 rounded-3xl border-white/5 mana-glow transition-all duration-500 border-glow hover:-translate-y-4" style="--mana-blue: #00d4ff">
+                        <div class="flex justify-between mb-8">
+                            <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center p-3 group-hover:scale-110 transition-transform border border-white/5">
+                                <img src="${g.logo}" class="w-full h-full object-contain" />
+                            </div>
+                            <span class="text-[9px] font-black text-mana-blue uppercase tracking-widest bg-mana-blue/10 px-3 py-1 rounded-full h-fit">Verified</span>
+                        </div>
+                        <h4 class="text-2xl font-black font-orbitron text-white mb-8 uppercase italic tracking-tight">${g.name}</h4>
+                        <div class="space-y-3">
+                            ${g.packages.map(p => `<button onclick="openModal('${g.name}', '${p.name}', '${p.price}', '#00d4ff')" class="w-full flex justify-between items-center bg-black/40 hover:bg-mana-blue/10 p-4 rounded-xl border border-white/5 transition-all text-left">
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">${p.name}</span>
+                                <span class="text-sm font-black text-mana-blue">$${p.price}</span>
+                            </button>`).join('')}
+                        </div>
+                    </div>`;
+                gg.appendChild(card);
+            });
+            appData.forEach(a => {
+                const color = APP_COLOR_MAP[a.name] || '#9d00ff';
+                const card = document.createElement('div');
+                card.className = 'card-wrap group';
+                card.innerHTML = `
+                    <div class="glass p-8 rounded-3xl border-white/5 mana-glow transition-all duration-500 border-glow hover:-translate-y-4" style="--mana-blue: ${color}">
+                        <div class="flex justify-between mb-8">
+                            <div class="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center p-3 group-hover:scale-110 transition-transform">
+                                <img src="https://cdn.simpleicons.org/${a.icon}/white" class="w-full h-full object-contain" />
+                            </div>
+                        </div>
+                        <h4 class="text-xl font-black font-orbitron text-white mb-8 uppercase italic">${a.name}</h4>
+                        <div class="space-y-3">
+                            ${a.packages.map(p => `<button onclick="openModal('${a.name}', '${p.name}', '${p.price}', '${color}')" class="w-full flex justify-between items-center bg-black/40 hover:bg-white/5 p-4 rounded-xl border border-white/5 transition-all">
+                                <span class="text-[10px] font-bold text-gray-400 uppercase">${p.name}</span>
+                                <span class="text-sm font-black" style="color: ${color}">$${p.price}</span>
+                            </button>`).join('')}
+                        </div>
+                    </div>`;
+                ag.appendChild(card);
+            });
+        }
+
+        let currentOrder = {};
+        function openModal(item, pkg, price, color) {
+            currentOrder = { item, pkg, price, color };
+            document.getElementById('modal-package-name').innerText = `${item} - ${pkg}`;
+            document.getElementById('modal-package-price').innerText = `$${price} JMD`;
+            const icon = [...gameData, ...appData].find(i => i.name === item)?.icon || (item === 'Roblox' ? 'roblox' : item.toLowerCase().replace(' ', ''));
+            document.getElementById('modal-logo').innerHTML = `<img src="https://cdn.simpleicons.org/${icon}/white" class="w-full h-full object-contain" onerror="this.src='https://cdn.simpleicons.org/target/white'" />`;
+            document.getElementById('order-modal').classList.remove('hidden');
+            gsap.from("#order-modal .glass", { scale: 0.8, opacity: 0, duration: 0.5, ease: "back.out" });
+        }
+
+        function closeModal() {
+            gsap.to("#order-modal .glass", { scale: 0.8, opacity: 0, duration: 0.3, onComplete: () => document.getElementById('order-modal').classList.add('hidden') });
+        }
+
+        function confirmOrder() {
+            const n = document.getElementById('order-name').value, id = document.getElementById('order-id').value, notes = document.getElementById('order-notes').value;
+            if(!n || !id) return notify("Input required: Agent ID & Name", "error");
+            const text = `*MONARCH OS: TRANSMISSION*%0A------------------%0A*ID:* ${peer.id}%0A*Object:* ${currentOrder.item}%0A*Tier:* ${currentOrder.pkg}%0A*Cost:* ${currentOrder.price}%0A*Agent:* ${n}%0A*Target:* ${id}%0A*Notes:* ${notes}%0A------------------%0A*Sector:* May Pen, Clarendon`;
+            window.open(`https://wa.me/16582013679?text=${text}`, '_blank');
+            closeModal(); notify("Transmission Relay Sent via WhatsApp.");
+        }
+
+        // --- Chat & Peer ---
+        function switchTab(t) {
+            currentTab = t;
+            const pub = document.getElementById('public-messages'), pri = document.getElementById('private-messages'), tPub = document.getElementById('tab-public'), tPri = document.getElementById('tab-private'), hTitle = document.getElementById('chat-header-title');
+            if (t === 'public') {
+                gsap.to(pub, { x: 0, duration: 0.5 }); gsap.to(pri, { x: '100%', duration: 0.5 });
+                tPub.classList.add('chat-tab-active'); tPri.classList.remove('chat-tab-active');
+                hTitle.innerText = "Channel: Global Hub";
+            } else {
+                gsap.to(pub, { x: '-100%', duration: 0.5 }); gsap.to(pri, { x: 0, duration: 0.5 });
+                tPri.classList.add('chat-tab-active'); tPub.classList.remove('chat-tab-active');
+                hTitle.innerText = isAdmin ? `Direct: ${selectedBuyerId || 'Select Node'}` : "Secure Monarch Link";
+            }
+        }
+
+        function initPeer() {
+            peer = isAdmin ? new Peer(ADMIN_PEER_ID) : new Peer();
+            peer.on('open', (id) => {
+                document.getElementById('my-id').innerText = id;
+                if(!isAdmin) setupConn(peer.connect(ADMIN_PEER_ID));
+            });
+            peer.on('connection', setupConn);
+        }
+
+        function setupConn(conn) {
+            if (isAdmin && bannedNodes.includes(conn.peer)) {
+                conn.on('open', () => {
+                    conn.send({ type: 'system', cmd: 'terminate', reason: 'Access Denied: Node Banned' });
+                    setTimeout(() => conn.close(), 500);
+                });
+                return;
+            }
+            conn.on('open', () => {
+                connections[conn.peer] = conn;
+                if(isAdmin) registerBuyer(conn.peer);
+                addSystemMessage(`Node Integrated: ${getShadowName(conn.peer)}`);
+            });
+            conn.on('data', (d) => {
+                if (d.type === 'system') {
+                    if (d.cmd === 'terminate') {
+                        document.body.innerHTML = `<div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#000; color:#ff003c; font-family:'Orbitron'; text-align:center; padding:20px;">
+                            <h1 style="font-size:4rem; margin-bottom:20px;">CONNECTION SEVERED</h1>
+                            <p style="letter-spacing:0.5em; opacity:0.7;">${d.reason || 'ADMINISTRATIVE SHUTDOWN'}</p>
+                        </div>`;
+                        if (peer) peer.destroy();
+                    } else if (d.cmd === 'rank_update') {
+                        localStorage.setItem('shadow-rank', d.rank);
+                        assignRank();
+                        notify(`Rank Recalibrated: Level.${d.rank}`);
+                    }
+                    return;
+                }
+                if(d.type === 'chat') {
+                    // Anti-Spoofing: Derive identity from connection context
+                    const isFromAdmin = conn.peer === ADMIN_PEER_ID;
+                    const senderName = isFromAdmin ? 'MONARCH' : getShadowName(conn.peer);
+                    const role = isFromAdmin ? 'admin' : 'buyer';
+
+                    displayMessage(senderName, d.msg, role, d.tab);
+                    playSystemSound();
+
+                    if(isAdmin && d.tab === 'public') {
+                        // Relay Global Broadcasts to all nodes
+                        Object.values(connections).forEach(c => {
+                            if(c.peer !== conn.peer) {
+                                c.send({ type: 'chat', msg: d.msg, tab: 'public' });
+                            }
+                        });
+                    }
+                }
+                else if(d.type === 'typing') document.getElementById('typing-indicator').style.opacity = d.status ? 1 : 0;
+            });
+            conn.on('close', () => {
+                delete connections[conn.peer];
+                addSystemMessage(`Node Desynchronized: ${getShadowName(conn.peer)}`);
+                if(isAdmin) {
+                    const el = document.getElementById(`buyer-${conn.peer}`);
+                    if(el) el.classList.add('opacity-30', 'grayscale');
+                }
+            });
+        }
+
+        function registerBuyer(id) {
+            if(document.getElementById(`buyer-${id}`)) return;
+            const b = document.createElement('button');
+            b.id = `buyer-${id}`;
+            b.className = "w-full text-left p-5 glass border-white/5 rounded-2xl text-[10px] font-mono transition-all hover:border-mana-blue flex justify-between items-center group";
+            b.innerHTML = `<span>NODE_${id.substring(0,10)}</span><i data-lucide="arrow-right" class="w-3 h-3 opacity-0 group-hover:opacity-100"></i>`;
+            b.onclick = () => {
+                selectedBuyerId = id; switchTab('private');
+                document.querySelectorAll('#active-buyers-list button').forEach(x => x.classList.remove('border-mana-blue'));
+                b.classList.add('border-mana-blue');
+            };
+            document.getElementById('active-buyers-list').appendChild(b);
+            document.getElementById('total-nodes').innerText = Object.keys(connections).length;
+            lucide.createIcons();
+        }
+
+        function saveChat(user, msg, role, tab) {
+            let history = JSON.parse(localStorage.getItem('monarch_chat_v2') || '[]');
+            history.push({ user, msg, role, tab, time: Date.now() });
+            if(history.length > 50) history.shift();
+            localStorage.setItem('monarch_chat_v2', JSON.stringify(history));
+        }
+
+        function loadChat() {
+            let history = JSON.parse(localStorage.getItem('monarch_chat_v2') || '[]');
+            history.forEach(h => displayMessage(h.user, h.msg, h.role, h.tab, false));
+        }
+
+        function clearLogs() {
+            localStorage.removeItem('monarch_chat_v2');
+            document.getElementById('public-messages').innerHTML = '';
+            document.getElementById('private-messages').innerHTML = '';
+            notify("Transmission logs purged.");
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('chat-input'), msg = input.value; if(!msg) return;
+            if(isAdmin) {
+                if(currentTab === 'private') {
+                    if(selectedBuyerId && connections[selectedBuyerId]) {
+                        connections[selectedBuyerId].send({ type: 'chat', msg, tab: 'private', senderName: 'MONARCH', role: 'admin' });
+                        displayMessage('YOU', msg, 'admin', 'private');
+                    }
+                } else {
+                    Object.values(connections).forEach(c => c.send({ type: 'chat', msg, tab: 'public', senderName: 'MONARCH', role: 'admin' }));
+                    displayMessage('MONARCH', msg, 'admin', 'public');
+                }
+            } else {
+                if(connections[ADMIN_PEER_ID]) {
+                    const myShadowName = getShadowName(peer.id);
+                    connections[ADMIN_PEER_ID].send({ type: 'chat', msg, tab: currentTab, senderName: myShadowName, role: 'buyer' });
+                    displayMessage('YOU', msg, 'buyer', currentTab);
+                } else notify("Monarch Offline.", "error");
+            }
+            input.value = '';
+        }
+
+        function displayMessage(user, msg, role, tab, save = true) {
+            const container = document.getElementById(tab === 'public' ? 'public-messages' : 'private-messages');
+            if (!container) return;
+            const div = document.createElement('div'), isMe = user === 'YOU' || (isAdmin && user === 'MONARCH') || (!isAdmin && user === 'MONARCH' && role === 'admin');
+            const alignment = (user === 'YOU' || (isAdmin && user === 'MONARCH')) ? 'items-end' : 'items-start';
+            div.className = `flex flex-col ${alignment} group mb-6`;
+
+            const glowClass = role === 'admin' ? 'border-mana-blue/30 text-mana-blue shadow-[0_0_15px_rgba(0,212,255,0.1)] bg-mana-blue/10' : 'border-white/10 text-white bg-white/5';
+
+            // XSS Prevention: Use textContent for the message body
+            const header = document.createElement('span');
+            header.className = "text-[8px] font-black uppercase text-gray-500 mb-2 px-3 tracking-widest";
+            header.textContent = user;
+
+            const bubble = document.createElement('div');
+            bubble.className = `p-5 rounded-2xl max-w-[85%] border ${glowClass} text-sm leading-relaxed backdrop-blur-md`;
+            bubble.textContent = msg;
+
+            div.appendChild(header);
+            div.appendChild(bubble);
+
+            container.appendChild(div); container.scrollTop = container.scrollHeight;
+            gsap.from(div, { x: alignment === 'items-end' ? 20 : -20, opacity: 0, duration: 0.5, ease: "power2.out" });
+            if(save) saveChat(user, msg, role, tab);
+        }
+
+        function addSystemMessage(msg) {
+            const div = document.createElement('div');
+            div.className = "text-[9px] terminal-text opacity-50 py-2 border-y border-white/5 my-4";
+            div.innerText = `> [SYSTEM]: ${msg}`;
+            document.getElementById('public-messages').appendChild(div);
+        }
+
+        function toggleTerminal() {
+            const t = document.getElementById('admin-terminal');
+            if(t.classList.contains('hidden')) {
+                t.classList.remove('hidden'); gsap.fromTo(t, { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.3 });
+                document.getElementById('terminal-input').focus();
+            } else {
+                gsap.to(t, { y: 20, opacity: 0, duration: 0.3, onComplete: () => t.classList.add('hidden') });
+            }
+        }
+
+        document.getElementById('terminal-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') {
+                const input = e.target.value.trim();
+                if (!input) return;
+                const out = document.getElementById('terminal-output');
+                const line = document.createElement('div'); line.innerHTML = `<span class="text-white">> ${input}</span>`;
+                const [c, ...args] = input.split(' ');
+                let res = '';
+
+                switch(c) {
+                    case '/announce':
+                        const msg = args.join(' ');
+                        Object.values(connections).forEach(x => x.send({ type: 'chat', msg: `[OS BROADCAST]: ${msg}`, tab: 'public' }));
+                        displayMessage('SYSTEM', msg, 'admin', 'public');
+                        res = 'Broadcast relay active.';
+                        break;
+                    case '/clear':
+                        document.getElementById('public-messages').innerHTML = '';
+                        res = 'Feed cleared.';
+                        break;
+                    case '/status':
+                        res = `Nodes: ${Object.keys(connections).length} | Peer: ${peer.id} | Banned: ${bannedNodes.length}`;
+                        break;
+                    case '/list':
+                        res = Object.keys(connections).map(id => `[${id.substring(0,8)}] ${getShadowName(id)}`).join(', ') || 'No active nodes.';
+                        break;
+                    case '/kick':
+                        const targetKick = args[0];
+                        if (connections[targetKick]) {
+                            connections[targetKick].send({ type: 'system', cmd: 'terminate', reason: 'Kicked by Monarch' });
+                            setTimeout(() => connections[targetKick].close(), 500);
+                            res = `Node ${targetKick} kicked.`;
+                        } else res = 'Node not found.';
+                        break;
+                    case '/ban':
+                        const targetBan = args[0];
+                        if (targetBan) {
+                            if (!bannedNodes.includes(targetBan)) {
+                                bannedNodes.push(targetBan);
+                                localStorage.setItem('monarch_bans', JSON.stringify(bannedNodes));
+                            }
+                            if (connections[targetBan]) {
+                                connections[targetBan].send({ type: 'system', cmd: 'terminate', reason: 'Banned by Monarch' });
+                                setTimeout(() => connections[targetBan].close(), 500);
+                            }
+                            res = `Node ${targetBan} banned.`;
+                        } else res = 'Usage: /ban <peer_id>';
+                        break;
+                    case '/unban':
+                        bannedNodes = bannedNodes.filter(id => id !== args[0]);
+                        localStorage.setItem('monarch_bans', JSON.stringify(bannedNodes));
+                        res = `Node ${args[0]} unbanned.`;
+                        break;
+                    case '/rank':
+                        const [rTarget, rVal] = args;
+                        if (connections[rTarget] && ['S','A','B','C','D','E'].includes(rVal)) {
+                            connections[rTarget].send({ type: 'system', cmd: 'rank_update', rank: rVal });
+                            res = `Rank for ${rTarget} set to ${rVal}.`;
+                        } else res = 'Usage: /rank <peer_id> <S|A|B|C|D|E>';
+                        break;
+                    case '/shutdown':
+                        Object.values(connections).forEach(x => x.send({ type: 'system', cmd: 'terminate', reason: 'Emergency System Shutdown' }));
+                        res = 'Broadcasted shutdown signal to all nodes.';
+                        break;
+                    default:
+                        res = 'Command unknown. [ /announce, /clear, /status, /list, /kick, /ban, /unban, /rank, /shutdown ]';
+                }
+
+                const rLine = document.createElement('div'); rLine.innerText = res; out.appendChild(line); out.appendChild(rLine);
+                out.scrollTop = out.scrollHeight; e.target.value = '';
+            }
+        });
+
+        function assignRank() {
+            let r = localStorage.getItem('shadow-rank') || ['E', 'D', 'C', 'B', 'A', 'S'][Math.floor(Math.random()*6)];
+            localStorage.setItem('shadow-rank', r);
+            const el = document.getElementById('user-rank');
+            el.innerText = r;
+            if(r === 'S') el.classList.add('mana-text-glow');
+            else el.classList.remove('mana-text-glow');
+        }
+
+        window.onload = () => { initThree(); startAuthTimer(); loadChat(); };
+        document.getElementById('admin-code').addEventListener('keypress', (e) => { if(e.key === 'Enter') checkAdmin(); });
+        document.getElementById('chat-input').addEventListener('keypress', (e) => { if(e.key === 'Enter') sendMessage(); });
+    </script>
+</body>
+</html>
