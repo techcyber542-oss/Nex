@@ -3,225 +3,426 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SHADOW MARKET | Solo Leveling Store</title>
+    <title>SHADOW MARKET | THE SYSTEM</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --mana-blue: #00d4ff;
             --mana-purple: #9d00ff;
-            --shadow-black: #050505;
+            --system-bg: #030305;
+            --system-border: rgba(0, 212, 255, 0.3);
+            --glitch-red: #ff003c;
+            --glitch-blue: #00f0ff;
+        }
+
+        * {
+            cursor: crosshair;
         }
 
         body {
-            background-color: var(--shadow-black);
-            color: white;
+            background-color: var(--system-bg);
+            color: #e0e0e0;
             font-family: 'Rajdhani', sans-serif;
             overflow-x: hidden;
+            margin: 0;
+            user-select: none;
         }
 
-        h1, h2, h3, .font-orbitron {
-            font-family: 'Orbitron', sans-serif;
+        .font-orbitron { font-family: 'Orbitron', sans-serif; }
+
+        /* Scanning Line Effect */
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 3px 100%;
+            z-index: 1000;
+            pointer-events: none;
+            opacity: 0.15;
+        }
+
+        .scanline {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 10px;
+            background: rgba(0, 212, 255, 0.1);
+            opacity: 0.1;
+            z-index: 1001;
+            pointer-events: none;
+            animation: scan 8s linear infinite;
+        }
+
+        @keyframes scan {
+            0% { top: -10% }
+            100% { top: 110% }
+        }
+
+        /* Glitch Effect */
+        .glitch {
+            position: relative;
+            display: inline-block;
+        }
+        .glitch::before, .glitch::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            opacity: 0.8;
+        }
+        .glitch::before {
+            color: var(--glitch-red);
+            z-index: -1;
+            animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) both infinite;
+        }
+        .glitch::after {
+            color: var(--glitch-blue);
+            z-index: -2;
+            animation: glitch 0.3s cubic-bezier(.25,.46,.45,.94) reverse both infinite;
+        }
+
+        @keyframes glitch {
+            0% { transform: translate(0) }
+            20% { transform: translate(-2px, 2px) }
+            40% { transform: translate(-2px, -2px) }
+            60% { transform: translate(2px, 2px) }
+            80% { transform: translate(2px, -2px) }
+            100% { transform: translate(0) }
         }
 
         .mana-glow {
+            box-shadow: 0 0 20px rgba(0, 212, 255, 0.2), inset 0 0 20px rgba(0, 212, 255, 0.1);
+            border: 1px solid var(--system-border);
+        }
+
+        .mana-text-glow {
             text-shadow: 0 0 10px var(--mana-blue), 0 0 20px var(--mana-blue);
         }
 
-        .mana-border {
-            border: 1px solid var(--mana-blue);
-            box-shadow: 0 0 15px rgba(0, 212, 255, 0.3);
-        }
-
         .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(10, 10, 15, 0.7);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
 
         .vortex-container {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
         }
 
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 5px;
-        }
-        ::-webkit-scrollbar-track {
-            background: var(--shadow-black);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: var(--mana-blue);
-            border-radius: 10px;
-        }
-
-        .btn-shadow {
+        /* Animated Border */
+        .border-glow {
             position: relative;
-            overflow: hidden;
-            transition: all 0.3s ease;
         }
-        .btn-shadow::before {
+        .border-glow::after {
             content: '';
             position: absolute;
-            top: 0; left: -100%;
-            width: 100%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.4), transparent);
-            transition: 0.5s;
+            inset: -2px;
+            background: linear-gradient(45deg, transparent, var(--mana-blue), transparent, var(--mana-purple), transparent);
+            background-size: 400% 400%;
+            z-index: -1;
+            animation: borderRotate 4s linear infinite;
+            border-radius: inherit;
+            opacity: 0;
+            transition: opacity 0.3s;
         }
-        .btn-shadow:hover::before {
-            left: 100%;
+        .border-glow:hover::after {
+            opacity: 1;
+        }
+
+        @keyframes borderRotate {
+            0% { background-position: 0% 50% }
+            50% { background-position: 100% 50% }
+            100% { background-position: 0% 50% }
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--mana-blue); }
+
+        /* Notifications */
+        .system-notif {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            z-index: 10000;
+            transform: translateX(120%);
+        }
+
+        /* Perspective Cards */
+        .card-wrap {
+            perspective: 1000px;
+        }
+        .card-inner {
+            transition: transform 0.5s;
+            transform-style: preserve-3d;
         }
 
         #admin-overlay {
             position: fixed;
             inset: 0;
-            background: rgba(0, 0, 0, 0.95);
+            background: #000;
             z-index: 9999;
             display: flex;
             align-items: center;
             justify-content: center;
-            backdrop-filter: blur(20px);
         }
 
-        .system-message {
-            border-left: 4px solid var(--mana-blue);
-            background: rgba(0, 212, 255, 0.1);
-            padding: 1rem;
-            margin: 1rem 0;
-            animation: slideIn 0.5s ease-out;
+        .gate-door {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background: #050505;
+            border: 1px solid var(--mana-blue);
+            transition: all 1s cubic-bezier(0.8, 0, 0.2, 1);
         }
+        .gate-left { left: 0; border-right: 2px solid var(--mana-blue); }
+        .gate-right { right: 0; border-left: 2px solid var(--mana-blue); }
 
-        @keyframes slideIn {
-            from { transform: translateX(-100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
+        .gate-open .gate-left { transform: translateX(-100%); }
+        .gate-open .gate-right { transform: translateX(100%); }
     </style>
 </head>
-<body>
+<body class="antialiased">
+    <div class="scanline"></div>
     <div id="vortex-canvas" class="vortex-container"></div>
 
-    <!-- Admin Prompt Overlay -->
-    <div id="admin-overlay">
-        <div class="glass p-8 rounded-lg max-w-md w-full text-center mana-border">
-            <h2 class="text-2xl font-bold mb-4 font-orbitron mana-glow">SYSTEM ACCESS</h2>
-            <p class="text-gray-400 mb-6">Enter authentication code to awaken administrator privileges.</p>
-            <input type="password" id="admin-code" class="w-full bg-black/50 border border-mana-blue/50 p-3 rounded mb-4 focus:outline-none focus:border-mana-blue text-center tracking-widest" placeholder="••••••••">
-            <div id="admin-timer" class="text-mana-blue font-bold mb-4 text-xl">25</div>
+    <!-- System Notifications Container -->
+    <div id="notifications" class="fixed top-8 right-8 z-[10000] space-y-4"></div>
+
+    <!-- Admin "Gate" Entry -->
+    <div id="admin-overlay" class="flex flex-col items-center justify-center overflow-hidden">
+        <div id="gate-l" class="gate-door gate-left"></div>
+        <div id="gate-r" class="gate-door gate-right"></div>
+
+        <div id="auth-box" class="relative z-10 glass p-10 rounded-lg mana-glow max-w-md w-full text-center border-mana-blue/40">
+            <h2 class="text-3xl font-black mb-2 font-orbitron tracking-tighter text-white">ACCESSING <span class="text-mana-blue">GATE</span></h2>
+            <div class="h-1 w-full bg-mana-blue/20 mb-6 relative">
+                <div id="auth-progress" class="absolute h-full bg-mana-blue w-full top-0 left-0 origin-left"></div>
+            </div>
+            <p class="text-gray-400 text-xs uppercase tracking-widest mb-6">Verification required to awaken system.</p>
+            <input type="password" id="admin-code" class="w-full bg-black/80 border border-mana-blue/30 p-4 rounded-md mb-6 focus:outline-none focus:border-mana-blue text-center tracking-[1em] text-mana-blue font-bold text-xl transition-all" placeholder="••••••••">
+            <div id="admin-timer" class="text-mana-blue font-black mb-6 text-3xl font-orbitron">25</div>
             <div class="flex gap-4">
-                <button onclick="checkAdmin()" class="flex-1 bg-mana-blue/20 hover:bg-mana-blue/40 border border-mana-blue p-2 rounded transition font-bold">VERIFY</button>
-                <button onclick="closeAdminPrompt()" class="flex-1 bg-white/5 hover:bg-white/10 p-2 rounded transition">SKIP</button>
+                <button onclick="checkAdmin()" class="flex-1 bg-mana-blue/10 hover:bg-mana-blue/30 border border-mana-blue text-mana-blue p-4 rounded font-black tracking-widest transition-all">CONNECT</button>
+                <button onclick="closeAdminPrompt()" class="flex-1 bg-white/5 hover:bg-white/10 p-4 rounded text-gray-500 font-bold transition-all">BYPASS</button>
             </div>
         </div>
     </div>
 
-    <!-- Main Content -->
+    <!-- Main Application UI -->
     <div id="main-ui" class="hidden opacity-0">
-        <!-- Navigation -->
-        <nav class="fixed top-0 w-full z-50 glass border-b border-white/10 px-6 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-mana-blue rounded-full flex items-center justify-center shadow-[0_0_15px_rgba(0,212,255,0.8)]">
-                    <i data-lucide="zap" class="text-black"></i>
+        <!-- Floating HUD -->
+        <header class="fixed top-0 w-full z-50 px-6 py-6 flex justify-between items-center pointer-events-none">
+            <div class="flex items-center gap-4 pointer-events-auto">
+                <div class="w-12 h-12 glass rounded-lg border border-mana-blue/50 flex items-center justify-center shadow-[0_0_20px_rgba(0,212,255,0.4)] overflow-hidden relative group">
+                    <div class="absolute inset-0 bg-mana-blue opacity-0 group-hover:opacity-20 transition-opacity"></div>
+                    <i data-lucide="shield-check" class="text-mana-blue w-6 h-6"></i>
                 </div>
-                <h1 class="text-2xl font-black tracking-tighter font-orbitron">SHADOW<span class="text-mana-blue">MARKET</span></h1>
+                <div class="flex flex-col">
+                    <h1 class="text-2xl font-black font-orbitron tracking-tighter leading-none text-white">SHADOW<span class="text-mana-blue">MARKET</span></h1>
+                    <span class="text-[10px] text-mana-blue font-bold tracking-[0.3em] uppercase">System Version 7784.0</span>
+                </div>
             </div>
-            <div class="hidden md:flex gap-8 font-bold text-sm tracking-widest uppercase">
-                <a href="#games" class="hover:text-mana-blue transition">Games</a>
-                <a href="#apps" class="hover:text-mana-blue transition">Subscriptions</a>
-                <a href="#chat" class="hover:text-mana-blue transition">Live Chat</a>
-            </div>
-            <div id="user-rank" class="glass px-4 py-1 rounded-full border-mana-blue/50 text-mana-blue font-bold">RANK: ?</div>
-        </nav>
 
-        <!-- Hero Section -->
-        <section class="pt-32 pb-20 px-6 text-center">
-            <h2 class="text-5xl md:text-8xl font-black mb-4 font-orbitron leading-none">ARISE.</h2>
-            <p class="text-xl md:text-2xl text-gray-400 max-w-2xl mx-auto mb-8 font-light italic">
-                "The shadows shall provide what the debit cards cannot."
-            </p>
-            <div class="flex flex-wrap justify-center gap-4 text-sm font-bold uppercase tracking-widest">
-                <span class="flex items-center gap-2 glass px-4 py-2 rounded-full border-mana-purple/50"><i data-lucide="map-pin" class="w-4 text-mana-purple"></i> May Pen, Clarendon</span>
-                <span class="flex items-center gap-2 glass px-4 py-2 rounded-full border-mana-blue/50"><i data-lucide="banknote" class="w-4 text-mana-blue"></i> Cash Meet-up Only</span>
+            <nav class="hidden md:flex gap-10 font-bold text-xs tracking-[0.2em] uppercase pointer-events-auto">
+                <a href="#games" class="text-gray-400 hover:text-mana-blue transition-colors relative group">
+                    GAMES
+                    <span class="absolute -bottom-1 left-0 w-0 h-px bg-mana-blue transition-all group-hover:w-full"></span>
+                </a>
+                <a href="#apps" class="text-gray-400 hover:text-mana-blue transition-colors relative group">
+                    APPS
+                    <span class="absolute -bottom-1 left-0 w-0 h-px bg-mana-blue transition-all group-hover:w-full"></span>
+                </a>
+                <a href="#chat" class="text-gray-400 hover:text-mana-blue transition-colors relative group">
+                    CHANNEL
+                    <span class="absolute -bottom-1 left-0 w-0 h-px bg-mana-blue transition-all group-hover:w-full"></span>
+                </a>
+            </nav>
+
+            <div class="pointer-events-auto flex items-center gap-4">
+                <div id="user-rank-box" class="glass px-6 py-2 rounded-sm border-mana-blue/30 flex flex-col items-end">
+                    <span class="text-[8px] text-gray-500 uppercase font-black">Awakened Rank</span>
+                    <span id="user-rank" class="text-mana-blue font-black text-xl font-orbitron mt-1">E</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero: The Awakening -->
+        <section class="min-h-screen flex flex-col items-center justify-center relative px-6 overflow-hidden">
+            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,212,255,0.1)_0%,transparent_70%)]"></div>
+
+            <div id="hero-title-wrap" class="text-center z-10">
+                <h2 data-text="ARISE." class="glitch text-8xl md:text-[12rem] font-black font-orbitron leading-none text-white tracking-tighter mb-4">ARISE.</h2>
+                <div class="flex items-center justify-center gap-4 mb-10">
+                    <div class="h-px w-20 bg-mana-blue"></div>
+                    <p class="text-mana-blue font-bold tracking-[0.5em] text-xs uppercase">The Shadows Obey</p>
+                    <div class="h-px w-20 bg-mana-blue"></div>
+                </div>
+
+                <div class="flex flex-wrap justify-center gap-6">
+                    <div class="glass px-8 py-4 rounded-lg border-mana-blue/20 group hover:border-mana-blue/50 transition-all">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="map-pin" class="text-mana-blue w-5"></i>
+                            <div class="text-left">
+                                <p class="text-[10px] text-gray-500 font-bold uppercase">Sector</p>
+                                <p class="text-sm font-bold text-white uppercase">May Pen, Clarendon</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="glass px-8 py-4 rounded-lg border-mana-purple/20 group hover:border-mana-purple/50 transition-all">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="zap" class="text-mana-purple w-5"></i>
+                            <div class="text-left">
+                                <p class="text-[10px] text-gray-500 font-bold uppercase">Transaction</p>
+                                <p class="text-sm font-bold text-white uppercase">Instant Cash Link</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="absolute bottom-20 animate-bounce">
+                <i data-lucide="chevron-down" class="text-mana-blue/50 w-8 h-8"></i>
             </div>
         </section>
 
-        <!-- Product Grid -->
-        <main class="max-w-7xl mx-auto px-6 space-y-24 pb-32">
-            <!-- Games -->
-            <section id="games">
-                <div class="flex items-center gap-4 mb-10">
-                    <h2 class="text-3xl font-orbitron font-bold">GAME CURRENCY</h2>
-                    <div class="h-px flex-1 bg-gradient-to-r from-mana-blue to-transparent"></div>
+        <!-- Content Grid -->
+        <main class="max-w-7xl mx-auto px-6 space-y-40 pb-40">
+
+            <!-- Games Grid -->
+            <section id="games" class="reveal">
+                <div class="flex items-end justify-between mb-16">
+                    <div>
+                        <h3 class="text-4xl font-black font-orbitron text-white">RESERVE <span class="text-mana-blue">POWER</span></h3>
+                        <p class="text-gray-500 font-bold tracking-widest mt-2">PREMIUM GAME CURRENCIES</p>
+                    </div>
+                    <div class="text-right hidden md:block">
+                        <span class="text-[10px] text-mana-blue font-bold tracking-widest uppercase">Verified System Items</span>
+                    </div>
                 </div>
-                <div id="games-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Games will be injected here -->
+                <div id="games-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Cards injected via JS -->
                 </div>
             </section>
 
-            <!-- Apps -->
-            <section id="apps">
-                <div class="flex items-center gap-4 mb-10">
-                    <h2 class="text-3xl font-orbitron font-bold">APP SUBSCRIPTIONS</h2>
-                    <div class="h-px flex-1 bg-gradient-to-r from-mana-purple to-transparent"></div>
+            <!-- Apps Grid -->
+            <section id="apps" class="reveal">
+                <div class="flex items-end justify-between mb-16">
+                    <div>
+                        <h3 class="text-4xl font-black font-orbitron text-white">SYSTEM <span class="text-mana-purple">EXTENSIONS</span></h3>
+                        <p class="text-gray-500 font-bold tracking-widest mt-2">PREMIUM APP ACCESS</p>
+                    </div>
+                    <div class="text-right hidden md:block">
+                        <span class="text-[10px] text-mana-purple font-bold tracking-widest uppercase">Encryption Enabled</span>
+                    </div>
                 </div>
-                <div id="apps-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                    <!-- Apps will be injected here -->
+                <div id="apps-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <!-- Cards injected via JS -->
                 </div>
             </section>
 
-            <!-- Chat Section -->
-            <section id="chat" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="lg:col-span-2 glass rounded-2xl overflow-hidden border-mana-blue/20 flex flex-col h-[600px]">
-                    <div class="bg-white/5 px-6 py-4 border-b border-white/10 flex justify-between items-center">
-                        <div class="flex items-center gap-3">
-                            <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-                            <span class="font-bold font-orbitron uppercase tracking-widest text-sm">System Hub</span>
+            <!-- Communication Hub -->
+            <section id="chat" class="grid grid-cols-1 lg:grid-cols-4 gap-10 reveal">
+                <div class="lg:col-span-3">
+                    <div class="glass rounded-2xl overflow-hidden mana-glow border-mana-blue/20 flex flex-col h-[700px] relative">
+                        <!-- Chat Header -->
+                        <div class="px-8 py-6 border-b border-white/5 flex justify-between items-center bg-white/5">
+                            <div class="flex items-center gap-4">
+                                <div class="relative">
+                                    <div class="w-12 h-12 rounded-full bg-mana-blue/20 border border-mana-blue/50 flex items-center justify-center">
+                                        <i data-lucide="cpu" class="text-mana-blue w-6 h-6"></i>
+                                    </div>
+                                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black animate-pulse"></div>
+                                </div>
+                                <div>
+                                    <h4 class="font-black font-orbitron text-white tracking-tight">ENCRYPTED CHANNEL</h4>
+                                    <p id="chat-status" class="text-[10px] text-mana-blue font-bold uppercase">Establishing Link...</p>
+                                </div>
+                            </div>
+                            <div class="flex gap-2">
+                                <div class="w-8 h-8 rounded border border-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-colors">
+                                    <i data-lucide="settings" class="w-4"></i>
+                                </div>
+                            </div>
                         </div>
-                        <div id="chat-status" class="text-xs text-gray-500">Connecting to Shadows...</div>
-                    </div>
-                    <div id="chat-messages" class="flex-1 overflow-y-auto p-6 space-y-4">
-                        <!-- Messages -->
-                    </div>
-                    <div class="p-4 bg-white/5 border-t border-white/10 flex gap-2">
-                        <input type="text" id="chat-input" class="flex-1 bg-black/40 border border-white/10 rounded-lg px-4 py-2 focus:outline-none focus:border-mana-blue" placeholder="Type a message...">
-                        <button onclick="sendMessage()" class="bg-mana-blue text-black font-bold px-6 py-2 rounded-lg hover:bg-white transition">SEND</button>
+
+                        <!-- Chat Messages -->
+                        <div id="chat-messages" class="flex-1 overflow-y-auto p-8 space-y-6 bg-[rgba(0,0,0,0.3)]">
+                            <div class="system-message">
+                                [SYSTEM]: Initializing secure communication protocol...
+                            </div>
+                        </div>
+
+                        <!-- Chat Input -->
+                        <div class="p-6 border-t border-white/5 bg-black/40">
+                            <div class="relative flex items-center">
+                                <input type="text" id="chat-input" class="w-full bg-white/5 border border-white/10 rounded-xl px-6 py-5 focus:outline-none focus:border-mana-blue text-sm placeholder:text-gray-600 transition-all pr-32" placeholder="Send transmission to the Monarch...">
+                                <button onclick="sendMessage()" class="absolute right-3 bg-mana-blue text-black font-black px-6 py-3 rounded-lg hover:bg-white transition-all text-xs tracking-widest shadow-[0_0_20px_rgba(0,212,255,0.3)]">
+                                    EXECUTE
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- Admin Controls / Private DM Info -->
-                <div id="side-panel" class="glass rounded-2xl p-6 border-mana-blue/20">
-                    <div id="admin-panel" class="hidden">
-                        <h3 class="text-xl font-orbitron font-bold mb-6 text-mana-blue">COMMANDER HUB</h3>
-                        <div class="space-y-4">
-                            <div class="text-xs text-gray-500 uppercase font-bold">Active Shadows (Buyers)</div>
-                            <div id="active-buyers" class="space-y-2">
-                                <!-- Buyer list -->
+                <!-- Side Info -->
+                <div class="space-y-8">
+                    <div id="side-panel" class="glass rounded-2xl p-8 border-mana-blue/20 relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full bg-mana-blue"></div>
+                        <div id="admin-panel" class="hidden">
+                            <h3 class="text-xl font-orbitron font-black mb-6 text-mana-blue">COMMANDER HUB</h3>
+                            <div class="space-y-4">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-[10px] text-gray-500 uppercase font-black">Active Nodes</span>
+                                    <span class="w-2 h-2 bg-mana-blue rounded-full"></span>
+                                </div>
+                                <div id="active-buyers" class="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                                    <!-- Dynamic -->
+                                </div>
+                            </div>
+                        </div>
+                        <div id="buyer-info">
+                            <h3 class="text-xl font-orbitron font-black mb-6 text-mana-blue">NODE STATUS</h3>
+                            <div class="space-y-6">
+                                <div>
+                                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-2">Identification</p>
+                                    <p id="my-id" class="text-xs font-mono text-mana-blue break-all bg-mana-blue/5 p-3 rounded-lg border border-mana-blue/10">Generating ID...</p>
+                                </div>
+                                <div>
+                                    <p class="text-[10px] text-gray-500 font-bold uppercase mb-2">Location Data</p>
+                                    <p class="text-sm font-bold text-white flex items-center gap-2">
+                                        <i data-lucide="map" class="w-4 text-mana-blue"></i> May Pen, Clarendon
+                                    </p>
+                                </div>
+                                <div class="pt-4 border-t border-white/5">
+                                    <p class="text-[10px] text-gray-400 leading-relaxed italic">
+                                        All transactions are localized. Confirm orders via the system to receive meet-up coordinates.
+                                    </p>
+                                </div>
                             </div>
                         </div>
                     </div>
-                    <div id="buyer-info">
-                        <h3 class="text-xl font-orbitron font-bold mb-6 text-mana-blue">YOUR STATUS</h3>
-                        <div class="space-y-4">
-                            <div class="flex justify-between items-center py-2 border-b border-white/5">
-                                <span class="text-gray-400">Shadow ID</span>
-                                <span id="my-id" class="text-xs font-mono">Loading...</span>
+
+                    <!-- Mini Map or Stats Decor -->
+                    <div class="glass rounded-2xl p-6 border-white/5 opacity-50">
+                        <div class="flex items-center gap-3 mb-4">
+                            <i data-lucide="activity" class="text-mana-blue w-4"></i>
+                            <span class="text-[10px] font-black text-white">SYSTEM INTEGRITY</span>
+                        </div>
+                        <div class="space-y-2">
+                            <div class="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-mana-blue w-[85%] animate-pulse"></div>
                             </div>
-                            <div class="flex justify-between items-center py-2 border-b border-white/5">
-                                <span class="text-gray-400">Position</span>
-                                <span class="text-mana-blue">May Pen, CLN</span>
-                            </div>
-                            <div class="pt-4">
-                                <p class="text-sm text-gray-400 leading-relaxed">
-                                    Use the chat to talk directly with the Shadow Monarch. All orders are confirmed via WhatsApp and completed in person.
-                                </p>
+                            <div class="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+                                <div class="h-full bg-mana-purple w-[40%]"></div>
                             </div>
                         </div>
                     </div>
@@ -230,109 +431,154 @@
         </main>
 
         <!-- Footer -->
-        <footer class="glass border-t border-white/10 py-12 text-center">
-            <p class="text-gray-500 text-sm tracking-widest">© 2024 SHADOW MARKET | POWERED BY THE ETERNAL SLUMBER</p>
+        <footer class="py-20 px-6 border-t border-white/5 text-center relative overflow-hidden">
+            <div class="max-w-2xl mx-auto relative z-10">
+                <h5 class="text-2xl font-black font-orbitron text-white mb-4">SYSTEM OF SHADOWS</h5>
+                <p class="text-xs text-gray-500 tracking-[0.4em] uppercase mb-10">Eternal Slumber Integration v7.7.8</p>
+                <div class="flex justify-center gap-8 text-gray-500">
+                    <i data-lucide="twitter" class="w-5 h-5 hover:text-mana-blue cursor-pointer"></i>
+                    <i data-lucide="instagram" class="w-5 h-5 hover:text-mana-blue cursor-pointer"></i>
+                    <i data-lucide="github" class="w-5 h-5 hover:text-mana-blue cursor-pointer"></i>
+                </div>
+            </div>
         </footer>
     </div>
 
-    <!-- WhatsApp Floating Button -->
-    <a href="https://wa.me/16582013679" target="_blank" class="fixed bottom-8 right-8 w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center shadow-2xl hover:scale-110 transition z-[60]">
-        <i data-lucide="message-circle" class="text-white w-8 h-8"></i>
-    </a>
-
     <!-- Order Modal -->
-    <div id="order-modal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-[100] hidden flex items-center justify-center p-6">
-        <div class="glass max-w-lg w-full rounded-2xl overflow-hidden mana-border">
-            <div class="p-6 border-b border-white/10 flex justify-between items-center">
-                <h3 id="modal-title" class="text-2xl font-orbitron font-bold text-mana-blue uppercase">PLACE ORDER</h3>
-                <button onclick="closeModal()" class="text-gray-400 hover:text-white"><i data-lucide="x"></i></button>
-            </div>
-            <div class="p-8 space-y-6">
+    <div id="order-modal" class="fixed inset-0 bg-black/90 backdrop-blur-xl z-[1000] hidden flex items-center justify-center p-6">
+        <div class="glass max-w-xl w-full rounded-2xl overflow-hidden mana-glow border-mana-blue/40 relative">
+            <div class="absolute top-0 left-0 w-full h-1 bg-mana-blue shadow-[0_0_15px_#00d4ff]"></div>
+
+            <div class="p-8 flex justify-between items-center border-b border-white/5">
                 <div>
-                    <label class="block text-sm font-bold text-gray-400 mb-2 uppercase">Selected Package</label>
-                    <div id="modal-package-name" class="text-xl font-bold">Roblox - 800 Robux</div>
-                    <div id="modal-package-price" class="text-mana-blue text-2xl font-black mt-1">$2,000 JMD</div>
+                    <h3 id="modal-title" class="text-2xl font-black font-orbitron text-white uppercase italic">ITEM REQUEST</h3>
+                    <p class="text-[10px] text-mana-blue font-bold tracking-widest uppercase">Encrypted Transmission</p>
                 </div>
-                <div class="space-y-4">
-                    <input type="text" id="order-name" placeholder="YOUR NAME" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 focus:outline-none focus:border-mana-blue">
-                    <input type="text" id="order-id" placeholder="IN-GAME ID / EMAIL" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 focus:outline-none focus:border-mana-blue">
-                    <textarea id="order-notes" placeholder="ADDITIONAL NOTES (Optional)" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 focus:outline-none focus:border-mana-blue h-24"></textarea>
+                <button onclick="closeModal()" class="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all hover:rotate-90">
+                    <i data-lucide="x"></i>
+                </button>
+            </div>
+
+            <div class="p-10 space-y-8">
+                <div class="flex items-center gap-6 p-6 bg-white/5 rounded-xl border border-white/5">
+                    <div id="modal-logo" class="w-16 h-16 text-mana-blue"></div>
+                    <div>
+                        <p id="modal-package-name" class="text-2xl font-bold text-white">Roblox - 800 Robux</p>
+                        <p id="modal-package-price" class="text-mana-blue text-3xl font-black font-orbitron">$2,000 JMD</p>
+                    </div>
                 </div>
-                <button onclick="confirmOrder()" class="w-full bg-mana-blue text-black font-black py-4 rounded-xl hover:scale-[1.02] transition shadow-[0_0_20px_rgba(0,212,255,0.3)]">CONFIRM & SEND VIA WHATSAPP</button>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Node Identifier</label>
+                        <input type="text" id="order-name" placeholder="Name" class="w-full bg-black/50 border border-white/10 rounded-lg p-4 focus:outline-none focus:border-mana-blue text-white transition-all">
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Target Account</label>
+                        <input type="text" id="order-id" placeholder="In-game ID / Email" class="w-full bg-black/50 border border-white/10 rounded-lg p-4 focus:outline-none focus:border-mana-blue text-white transition-all">
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-gray-500 uppercase tracking-widest px-1">Special Directives</label>
+                    <textarea id="order-notes" placeholder="Notes..." class="w-full bg-black/50 border border-white/10 rounded-lg p-4 focus:outline-none focus:border-mana-blue text-white transition-all h-24"></textarea>
+                </div>
+
+                <button onclick="confirmOrder()" class="w-full bg-mana-blue text-black font-black py-6 rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-all shadow-[0_0_30px_rgba(0,212,255,0.4)] font-orbitron tracking-tighter text-xl uppercase">
+                    INITIATE LINK
+                </button>
             </div>
         </div>
     </div>
 
+    <!-- Floating Contact -->
+    <div class="fixed bottom-10 right-10 z-[500] flex flex-col gap-4">
+        <div id="wa-tooltip" class="glass px-4 py-2 rounded-lg text-[10px] font-black text-mana-blue uppercase tracking-widest opacity-0 translate-x-10 transition-all pointer-events-none border-mana-blue/30">Direct Link</div>
+        <a href="https://wa.me/16582013679" target="_blank" onmouseenter="showTooltip()" onmouseleave="hideTooltip()" class="w-16 h-16 bg-[#25D366] rounded-full flex items-center justify-center shadow-[0_0_30px_rgba(37,211,102,0.4)] hover:scale-110 active:scale-90 transition-all group overflow-hidden">
+            <div class="absolute inset-0 bg-white opacity-0 group-hover:opacity-20 transition-opacity"></div>
+            <i data-lucide="message-circle" class="text-white w-8 h-8"></i>
+        </a>
+    </div>
+
     <script>
-        // Lucide Icons
+        // Init Lucide
         lucide.createIcons();
 
-        // Three.js Vortex Background
-        let scene, camera, renderer, particles, particles2;
-        let mouseX = 0, mouseY = 0;
-        const particleCount = 2000;
+        // Register GSAP ScrollTrigger
+        gsap.registerPlugin(ScrollTrigger);
 
-        function initVortex() {
+        // System Constants
+        const ADMIN_PEER_ID = 'ShadowMonarch_Admin_7784_Nexus';
+        const APP_COLOR_MAP = {
+            'Spotify': '#1DB954',
+            'Apple Music': '#fc3c44',
+            'Crunchyroll': '#F47521',
+            'Amazon Prime': '#00A8E1',
+            'YouTube Premium': '#FF0000',
+            'YT Music': '#FF0000',
+            'Apple TV+': '#FFFFFF',
+            'Disney+': '#006E99'
+        };
+
+        // Global State
+        let isAdmin = false;
+        let peer;
+        let connections = {};
+        let selectedBuyerId = null;
+
+        // --- Three.js Background Implementation ---
+        let scene, camera, renderer, particles, starGeo;
+
+        function initThree() {
             scene = new THREE.Scene();
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 1, 1000);
+            camera.position.z = 1;
+            camera.rotation.x = Math.PI/2;
+
             renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.getElementById('vortex-canvas').appendChild(renderer.domElement);
 
-            const geometry = new THREE.BufferGeometry();
-            const posArray = new Float32Array(particleCount * 3);
-            for (let i = 0; i < particleCount * 3; i++) {
-                posArray[i] = (Math.random() - 0.5) * 15;
+            starGeo = new THREE.BufferGeometry();
+            const positions = [];
+            const velocities = [];
+            for(let i=0; i<6000; i++) {
+                positions.push(Math.random() * 600 - 300);
+                positions.push(Math.random() * 600 - 300);
+                positions.push(Math.random() * 600 - 300);
+                velocities.push(0);
             }
-            geometry.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
+            starGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+            starGeo.setAttribute('velocity', new THREE.Float32BufferAttribute(velocities, 1));
 
-            const material = new THREE.PointsMaterial({
-                size: 0.02,
+            let sprite = new THREE.TextureLoader().load('https://threejs.org/examples/textures/sprites/disc.png');
+            let starMaterial = new THREE.PointsMaterial({
                 color: 0x00d4ff,
+                size: 0.7,
+                map: sprite,
                 transparent: true,
-                opacity: 0.6,
                 blending: THREE.AdditiveBlending
             });
 
-            const material2 = new THREE.PointsMaterial({
-                size: 0.015,
-                color: 0x9d00ff,
-                transparent: true,
-                opacity: 0.4,
-                blending: THREE.AdditiveBlending
-            });
-
-            particles = new THREE.Points(geometry, material);
-            particles2 = new THREE.Points(geometry, material2);
-
+            particles = new THREE.Points(starGeo, starMaterial);
             scene.add(particles);
-            scene.add(particles2);
-            camera.position.z = 5;
 
-            document.addEventListener('mousemove', (e) => {
-                mouseX = (e.clientX - window.innerWidth / 2) / 100;
-                mouseY = (e.clientY - window.innerHeight / 2) / 100;
-            });
-
-            animate();
+            animateThree();
         }
 
-        function animate() {
-            requestAnimationFrame(animate);
-
+        function animateThree() {
+            const pos = starGeo.attributes.position.array;
+            for(let i=0; i<pos.length; i+=3) {
+                pos[i+1] -= 0.5; // fall
+                if(pos[i+1] < -200) {
+                    pos[i+1] = 200;
+                }
+            }
+            starGeo.attributes.position.needsUpdate = true;
             particles.rotation.y += 0.002;
-            particles.rotation.x += 0.001;
-            particles2.rotation.y -= 0.001;
-            particles2.rotation.z += 0.002;
-
-            gsap.to(camera.position, {
-                x: mouseX * 0.5,
-                y: -mouseY * 0.5,
-                duration: 2,
-                ease: "power2.out"
-            });
 
             renderer.render(scene, camera);
+            requestAnimationFrame(animateThree);
         }
 
         window.addEventListener('resize', () => {
@@ -341,356 +587,364 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
         });
 
-        initVortex();
+        // --- Auth Logic ---
+        let authTimer;
+        let timeRemaining = 25;
 
-        // Chat Enter Key
-        document.getElementById('chat-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') sendMessage();
-        });
+        function startAuthTimer() {
+            authTimer = setInterval(() => {
+                timeRemaining--;
+                document.getElementById('admin-timer').innerText = timeRemaining;
 
-        // Admin Logic
-        let isAdmin = false;
-        let timeLeft = 25;
-        const timerEl = document.getElementById('admin-timer');
-        const adminInterval = setInterval(() => {
-            timeLeft--;
-            timerEl.innerText = timeLeft;
-            if (timeLeft <= 0) {
-                clearInterval(adminInterval);
-                closeAdminPrompt();
-            }
-        }, 1000);
+                // Progress bar
+                gsap.to('#auth-progress', { scaleX: timeRemaining / 25, duration: 1, ease: 'linear' });
+
+                if (timeRemaining <= 0) {
+                    clearInterval(authTimer);
+                    closeAdminPrompt();
+                }
+            }, 1000);
+        }
 
         function checkAdmin() {
-            const code = document.getElementById('admin-code').value;
-            if (code === 'TheTrueShadowMonarch') {
+            const val = document.getElementById('admin-code').value;
+            if (val === 'TheTrueShadowMonarch') {
                 isAdmin = true;
-                clearInterval(adminInterval);
-                showMainUI();
-                document.getElementById('admin-panel').classList.remove('hidden');
-                document.getElementById('buyer-info').classList.add('hidden');
-                initPeer();
-                addSystemMessage("Administrator Privileges Awakened.");
+                clearInterval(authTimer);
+                notify("System Awakened. Welcome back, Monarch.");
+                awakenSystem();
             } else {
-                alert("ACCESS DENIED");
+                gsap.to('#auth-box', { x: [-10, 10, -10, 10, 0], duration: 0.4 });
+                document.getElementById('admin-code').value = '';
+                notify("Verification Failed. Access Denied.");
             }
         }
 
         function closeAdminPrompt() {
-            clearInterval(adminInterval);
-            document.getElementById('admin-overlay').style.display = 'none';
-            showMainUI();
+            clearInterval(authTimer);
+            awakenSystem();
         }
 
-        function showMainUI() {
-            document.getElementById('admin-overlay').style.display = 'none';
-            const main = document.getElementById('main-ui');
-            main.classList.remove('hidden');
-            gsap.to(main, { opacity: 1, duration: 1, ease: "power2.out" });
-            assignRank();
-            if (!isAdmin) initPeer();
+        function awakenSystem() {
+            document.getElementById('admin-overlay').classList.add('gate-open');
+            setTimeout(() => {
+                document.getElementById('admin-overlay').style.display = 'none';
+                const main = document.getElementById('main-ui');
+                main.classList.remove('hidden');
+                gsap.to(main, { opacity: 1, duration: 1 });
+
+                initAnimations();
+                initPeer();
+                assignRank();
+                renderCards();
+            }, 1000);
         }
 
-        function assignRank() {
-            let rank = localStorage.getItem('shadow-rank');
-            if (!rank) {
-                const ranks = ['E', 'D', 'C', 'B', 'A', 'S'];
-                rank = ranks[Math.floor(Math.random() * ranks.length)];
-                localStorage.setItem('shadow-rank', rank);
-            }
-            document.getElementById('user-rank').innerText = `RANK: ${rank}`;
+        // --- Animations ---
+        function initAnimations() {
+            gsap.from(".reveal", {
+                scrollTrigger: {
+                    trigger: ".reveal",
+                    start: "top 80%",
+                },
+                y: 50,
+                opacity: 0,
+                duration: 1,
+                stagger: 0.3,
+                ease: "power3.out"
+            });
+
+            gsap.from("#hero-title-wrap", {
+                scale: 0.8,
+                opacity: 0,
+                duration: 1.5,
+                ease: "expo.out"
+            });
         }
 
-        // Data and Rendering
+        function notify(msg, type = 'info') {
+            const container = document.getElementById('notifications');
+            const el = document.createElement('div');
+            el.className = `glass border-l-4 ${type === 'error' ? 'border-red-500' : 'border-mana-blue'} p-4 w-72 flex items-start gap-3 shadow-2xl transition-all duration-500`;
+            el.innerHTML = `
+                <i data-lucide="${type === 'error' ? 'alert-circle' : 'bell'}" class="w-4 h-4 mt-1 ${type === 'error' ? 'text-red-500' : 'text-mana-blue'}"></i>
+                <div>
+                    <p class="text-[10px] font-black uppercase text-gray-500">System Message</p>
+                    <p class="text-xs font-bold text-white">${msg}</p>
+                </div>
+            `;
+            container.appendChild(el);
+            lucide.createIcons();
+
+            gsap.fromTo(el, { x: 100, opacity: 0 }, { x: 0, opacity: 1, duration: 0.5, ease: "back.out" });
+
+            setTimeout(() => {
+                gsap.to(el, { x: 100, opacity: 0, duration: 0.5, onComplete: () => el.remove() });
+            }, 5000);
+        }
+
+        // --- Card Logic ---
         const gameData = [
             {
+                id: 'roblox',
                 name: "Roblox",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-white"><path d="M18.826 23.357l-14.764-2.953-2.953-14.764 14.764 2.953 2.953 14.764zm-10.748-11.81l2.953 0.591 0.591 2.953-2.953-0.591-0.591-2.953zm13.813-10.438l-17.705-3.541-3.541 17.705 17.705 3.541 3.541-17.705zm-11.81 10.748l2.953 0.591 0.591 2.953-2.953-0.591-0.591-2.953z"/></svg>`,
-                color: "mana-blue",
+                logo: `https://cdn.simpleicons.org/roblox/white`,
                 packages: [
-                    { name: "800 Robux", price: "2000" },
-                    { name: "1700 Robux", price: "4000" },
-                    { name: "4500 Robux", price: "10000" },
-                    { name: "10000 Robux", price: "20000" }
+                    { name: "800 Robux", price: "2,000" },
+                    { name: "1,700 Robux", price: "4,000" },
+                    { name: "4,500 Robux", price: "10,000" },
+                    { name: "10,000 Robux", price: "20,000" }
                 ]
             },
             {
+                id: 'bloxfruits',
+                name: "Blox Fruits",
+                logo: `https://cdn.simpleicons.org/roblox/white`,
+                packages: [
+                    { name: "Perm Buddha", price: "4,500" },
+                    { name: "Perm Kitsune", price: "12,000" },
+                    { name: "Perm Dough", price: "6,500" },
+                    { name: "2x Mastery", price: "1,500" }
+                ]
+            },
+            {
+                id: 'ps99',
+                name: "Pet Sim 99",
+                logo: `https://cdn.simpleicons.org/roblox/white`,
+                packages: [
+                    { name: "100M Gems", price: "3,000" },
+                    { name: "Huge Happy Rock", price: "5,000" },
+                    { name: "Enchant Books", price: "1,200" }
+                ]
+            },
+            {
+                id: 'mm2',
+                name: "MM2",
+                logo: `https://cdn.simpleicons.org/roblox/white`,
+                packages: [
+                    { name: "Harvester", price: "8,000" },
+                    { name: "Icebreaker Set", price: "2,500" },
+                    { name: "Batwing", price: "1,500" }
+                ]
+            },
+            {
+                id: 'freefire',
                 name: "Free Fire",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-orange-500"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71L12 2z"/></svg>`,
-                color: "orange-500",
+                logo: `https://cdn.simpleicons.org/freefire/white`,
                 packages: [
                     { name: "110 Diamonds", price: "300" },
-                    { name: "231 Diamonds", price: "600" },
-                    { name: "583 Diamonds", price: "1500" },
-                    { name: "1188 Diamonds", price: "3000" },
-                    { name: "2420 Diamonds", price: "6000" }
+                    { name: "583 Diamonds", price: "1,500" },
+                    { name: "1,188 Diamonds", price: "3,000" },
+                    { name: "2,420 Diamonds", price: "6,000" }
                 ]
             },
             {
+                id: 'pubg',
                 name: "PUBG Mobile",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-yellow-500"><path d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2z"/></svg>`,
-                color: "yellow-500",
+                logo: `https://cdn.simpleicons.org/pubg/white`,
                 packages: [
                     { name: "60 UC", price: "250" },
-                    { name: "325 UC", price: "1200" },
-                    { name: "660 UC", price: "2400" },
-                    { name: "1800 UC", price: "6000" },
-                    { name: "6000 UC", price: "18000" }
+                    { name: "325 UC", price: "1,200" },
+                    { name: "660 UC", price: "2,400" },
+                    { name: "1,800 UC", price: "6,000" }
                 ]
             },
             {
+                id: 'bloodstrike',
                 name: "Blood Strike",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-red-600"><path d="M12 2L2 22h20L12 2zm0 5l6.5 13h-13L12 7z"/></svg>`,
-                color: "red-600",
+                logo: `https://cdn.simpleicons.org/target/white`,
                 packages: [
-                    { name: "50 Gold", price: "150" },
                     { name: "100 Gold", price: "300" },
                     { name: "300 Gold", price: "800" },
-                    { name: "500 Gold", price: "1200" },
-                    { name: "1000 Gold", price: "2400" }
+                    { name: "500 Gold", price: "1,200" },
+                    { name: "1,000 Gold", price: "2,400" }
+                ]
+            },
+            {
+                id: 'callofduty',
+                name: "COD Mobile",
+                logo: `https://cdn.simpleicons.org/activision/white`,
+                packages: [
+                    { name: "80 CP", price: "250" },
+                    { name: "420 CP", price: "1,200" },
+                    { name: "880 CP", price: "2,400" },
+                    { name: "2,400 CP", price: "6,000" }
                 ]
             }
         ];
 
         const appData = [
-            {
-                name: "Spotify",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#1DB954]"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.5 17.3c-.2.3-.6.4-.9.2-2.8-1.7-6.2-2.1-10.3-1.1-.3.1-.7-.1-.8-.4s.1-.7.4-.8c4.5-1 8.3-.5 11.4 1.4.3.2.4.6.2.7zm1.5-3.3c-.3.4-.8.5-1.2.2-3.1-1.9-7.9-2.5-11.7-1.4-.5.1-.9-.2-1-.7s.2-.9.7-1c4.4-1.3 9.7-.6 13.2 1.5.4.3.5.9.2 1.4zm.1-3.4C15 8.3 8.4 8.1 4.5 9.3c-.5.2-1.1-.1-1.3-.6-.2-.5.1-1.1.6-1.3 4.5-1.4 11.8-1.1 16.3 1.5.5.3.6.9.3 1.4-.3.5-.9.6-1.4.3z"/></svg>`,
-                packages: [
-                    { name: "Student", price: "700" },
-                    { name: "Individual", price: "1200" },
-                    { name: "Duo", price: "1600" },
-                    { name: "Family", price: "2000" }
-                ]
-            },
-            {
-                name: "Apple Music",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-pink-500"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.536 15.656c-.365.176-.786.115-1.074-.153l-2.072-1.933c-.217-.202-.34-.486-.34-.783v-4.52c0-.58.47-1.05 1.05-1.05s1.05.47 1.05 1.05v3.916l1.636 1.527c.365.34.401.896.084 1.28l-.334.666z"/></svg>`,
-                packages: [
-                    { name: "Student", price: "700" },
-                    { name: "Individual", price: "1200" },
-                    { name: "Family", price: "2000" }
-                ]
-            },
-            {
-                name: "Crunchyroll",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#F47521]"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/></svg>`,
-                packages: [
-                    { name: "Fan", price: "1400" },
-                    { name: "Mega Fan", price: "1800" }
-                ]
-            },
-            {
-                name: "Amazon Prime",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#00A8E1]"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/></svg>`,
-                packages: [
-                    { name: "Monthly", price: "2500" }
-                ]
-            },
-            {
-                name: "YouTube Premium",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-red-600"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`,
-                packages: [
-                    { name: "Individual", price: "1500" },
-                    { name: "Family", price: "2500" }
-                ]
-            },
-            {
-                name: "YT Music",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-red-500"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 18.5c-3.59 0-6.5-2.91-6.5-6.5S8.41 5.5 12 5.5s6.5 2.91 6.5 6.5-2.91 6.5-6.5 6.5zM10 9l5 3-5 3V9z"/></svg>`,
-                packages: [
-                    { name: "Starting", price: "7 USD" },
-                    { name: "Individual", price: "1200" }
-                ]
-            },
-            {
-                name: "Apple TV+",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-gray-300"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm4.5 15.5h-9v-1h9v1zm0-3h-9v-1h9v1zm0-3h-9v-1h9v1z"/></svg>`,
-                packages: [
-                    { name: "Monthly", price: "1500" }
-                ]
-            },
-            {
-                name: "Disney+",
-                logo: `<svg viewBox="0 0 24 24" fill="currentColor" class="w-full h-full text-[#006E99]"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0z"/></svg>`,
-                packages: [
-                    { name: "Basic", price: "1500" },
-                    { name: "Premium", price: "2400" }
-                ]
-            }
+            { name: "Spotify", icon: 'spotify', packages: [{ name: "Student", price: "700" }, { name: "Individual", price: "1,200" }, { name: "Duo", price: "1,600" }, { name: "Family", price: "2,000" }] },
+            { name: "Apple Music", icon: 'applemusic', packages: [{ name: "Student", price: "700" }, { name: "Individual", price: "1,200" }, { name: "Family", price: "2,000" }] },
+            { name: "Crunchyroll", icon: 'crunchyroll', packages: [{ name: "Fan", price: "1,400" }, { name: "Mega Fan", price: "1,800" }] },
+            { name: "Amazon Prime", icon: 'amazonprime', packages: [{ name: "Monthly", price: "2,500" }] },
+            { name: "YT Music", icon: 'youtubemusic', packages: [{ name: "Individual", price: "1,200" }, { name: "Family", price: "2,200" }] },
+            { name: "YouTube Premium", icon: 'youtube', packages: [{ name: "Individual", price: "1,500" }, { name: "Family", price: "2,500" }] },
+            { name: "Apple TV+", icon: 'appletv', packages: [{ name: "Monthly", price: "1,500" }] },
+            { name: "Disney+", icon: 'disneyplus', packages: [{ name: "Basic", price: "1,500" }, { name: "Premium", price: "2,400" }] }
         ];
 
-        function renderProducts() {
-            const gamesGrid = document.getElementById('games-grid');
-            gameData.forEach(game => {
-                const card = document.createElement('div');
-                card.className = 'glass rounded-2xl p-6 border-white/5 hover:border-mana-blue/50 transition-all group';
-                card.innerHTML = `
-                    <div class="w-16 h-16 mb-6 group-hover:scale-110 transition">${game.logo}</div>
-                    <h3 class="text-xl font-bold mb-4 font-orbitron">${game.name}</h3>
-                    <div class="space-y-2">
-                        ${game.packages.map(pkg => `
-                            <button onclick="openModal('${game.name}', '${pkg.name}', '${pkg.price}')" class="w-full text-left bg-white/5 hover:bg-mana-blue/20 p-3 rounded-lg flex justify-between items-center transition">
-                                <span class="text-sm font-medium text-gray-300">${pkg.name}</span>
-                                <span class="text-mana-blue font-bold">$${pkg.price}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                `;
-                gamesGrid.appendChild(card);
+        function renderCards() {
+            const gg = document.getElementById('games-grid');
+            const ag = document.getElementById('apps-grid');
+
+            gameData.forEach(g => {
+                const card = createCard(g, 'mana-blue');
+                gg.appendChild(card);
             });
 
-            const appsGrid = document.getElementById('apps-grid');
-            appData.forEach(app => {
-                const card = document.createElement('div');
-                card.className = 'glass rounded-2xl p-6 border-white/5 hover:border-mana-purple/50 transition-all group';
-                card.innerHTML = `
-                    <div class="w-16 h-16 mb-6 group-hover:scale-110 transition">${app.logo}</div>
-                    <h3 class="text-xl font-bold mb-4 font-orbitron">${app.name}</h3>
-                    <div class="space-y-2">
-                        ${app.packages.map(pkg => `
-                            <button onclick="openModal('${app.name}', '${pkg.name}', '${pkg.price}')" class="w-full text-left bg-white/5 hover:bg-mana-purple/20 p-3 rounded-lg flex justify-between items-center transition">
-                                <span class="text-sm font-medium text-gray-300">${pkg.name}</span>
-                                <span class="text-mana-blue font-bold">$${pkg.price}</span>
-                            </button>
-                        `).join('')}
-                    </div>
-                `;
-                appsGrid.appendChild(card);
+            appData.forEach(a => {
+                const color = APP_COLOR_MAP[a.name] || '#9d00ff';
+                const card = createCard(a, color, true);
+                ag.appendChild(card);
             });
         }
 
-        renderProducts();
+        function createCard(item, accentColor, isApp = false) {
+            const div = document.createElement('div');
+            div.className = 'card-wrap group';
 
-        // Modal Logic
+            let logo;
+            if (isApp) {
+                logo = `<img src="https://cdn.simpleicons.org/${item.icon}/white" class="w-full h-full object-contain" />`;
+            } else {
+                logo = item.logo.startsWith('http') ? `<img src="${item.logo}" class="w-full h-full object-contain" />` : item.logo;
+            }
+
+            div.innerHTML = `
+                <div class="card-inner glass p-6 rounded-2xl border-white/5 mana-glow hover:translate-z-10 transition-all duration-500 border-glow" style="--mana-blue: ${accentColor}">
+                    <div class="flex justify-between items-start mb-6">
+                        <div class="w-14 h-14 bg-white/5 rounded-xl border border-white/5 flex items-center justify-center p-3 group-hover:scale-110 transition-transform">
+                            ${logo}
+                        </div>
+                        <div class="text-right">
+                            <span class="text-[8px] font-black uppercase tracking-[0.2em]" style="color: ${accentColor}">Stock Verified</span>
+                        </div>
+                    </div>
+                    <h4 class="text-xl font-black font-orbitron text-white mb-6 uppercase tracking-tight">${item.name}</h4>
+                    <div class="space-y-2">
+                        ${item.packages.map(p => `
+                            <button onclick="openModal('${item.name}', '${p.name}', '${p.price}', '${accentColor}')" class="w-full flex justify-between items-center bg-black/40 hover:bg-white/5 p-3 rounded-lg border border-white/5 transition-all text-left">
+                                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">${p.name}</span>
+                                <span class="text-sm font-black" style="color: ${accentColor}">${p.price.includes('USD') ? p.price : '$' + p.price}</span>
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        // --- Modal Logic ---
         let currentOrder = {};
 
-        function openModal(item, pkg, price) {
-            currentOrder = { item, pkg, price };
-            document.getElementById('modal-title').innerText = `RECHARGE ${item}`;
+        function openModal(item, pkg, price, color) {
+            currentOrder = { item, pkg, price, color };
             document.getElementById('modal-package-name').innerText = `${item} - ${pkg}`;
-            document.getElementById('modal-package-price').innerText = `$${price} JMD`;
+            document.getElementById('modal-package-price').innerText = price.includes('USD') ? price : `$${price} JMD`;
+
+            const findItem = [...gameData, ...appData].find(i => i.name === item);
+            let logoHtml;
+            if (findItem && findItem.icon) {
+                logoHtml = `<img src="https://cdn.simpleicons.org/${findItem.icon}/white" class="w-20 h-20" />`;
+            } else if (findItem && findItem.logo && findItem.logo.startsWith('http')) {
+                logoHtml = `<img src="${findItem.logo}" class="w-20 h-20" />`;
+            } else {
+                logoHtml = `<div class="w-full h-full flex items-center justify-center font-black text-4xl" style="color: ${color}">${item[0]}</div>`;
+            }
+
+            document.getElementById('modal-logo').innerHTML = logoHtml;
             document.getElementById('order-modal').classList.remove('hidden');
             document.getElementById('order-modal').style.display = 'flex';
+            gsap.from("#order-modal .glass", { scale: 0.9, opacity: 0, duration: 0.4, ease: "back.out" });
         }
 
         function closeModal() {
-            document.getElementById('order-modal').style.display = 'none';
+            gsap.to("#order-modal .glass", { scale: 0.9, opacity: 0, duration: 0.3, onComplete: () => {
+                document.getElementById('order-modal').style.display = 'none';
+            }});
         }
 
         function confirmOrder() {
             const name = document.getElementById('order-name').value;
             const id = document.getElementById('order-id').value;
             const notes = document.getElementById('order-notes').value;
-            const shadowId = peer.id;
+            if(!name || !id) return notify("Input error: All target data required.", "error");
 
-            if (!name || !id) {
-                alert("Please fill in required fields.");
-                return;
-            }
-
-            const text = `*SHADOW MARKET ORDER*%0A------------------%0A*Shadow ID:* ${shadowId}%0A*Item:* ${currentOrder.item}%0A*Package:* ${currentOrder.pkg}%0A*Price:* $${currentOrder.price} JMD%0A*Buyer Name:* ${name}%0A*In-game ID/Email:* ${id}%0A*Notes:* ${notes}%0A------------------%0A*Meet-up Location:* May Pen, Clarendon`;
-
+            const text = `*THE SYSTEM: NEW REQUEST*%0A------------------%0A*Shadow ID:* ${peer.id}%0A*Object:* ${currentOrder.item}%0A*Tier:* ${currentOrder.pkg}%0A*Cost:* ${currentOrder.price}%0A*Node:* ${name}%0A*Target:* ${id}%0A*Directives:* ${notes}%0A------------------%0A*Sector:* May Pen, Clarendon`;
             window.open(`https://wa.me/16582013679?text=${text}`, '_blank');
             closeModal();
-            addSystemMessage(`Order transmitted. Your Shadow ID (${shadowId}) is now active.`);
+            addSystemMessage(`Request transmitted to the Monarch. Link active.`);
+            notify("Order Transmitted via WhatsApp.");
         }
 
-        // PeerJS Communication
-        const ADMIN_PEER_ID = 'ShadowMonarch_Admin_7784';
-        let peer;
-        let connections = {};
-        const chatMessages = document.getElementById('chat-messages');
-        const activeBuyers = document.getElementById('active-buyers');
-
+        // --- PeerJS & Chat ---
         function initPeer() {
-            if (isAdmin) {
-                peer = new Peer(ADMIN_PEER_ID);
-            } else {
-                peer = new Peer();
-            }
+            peer = isAdmin ? new Peer(ADMIN_PEER_ID) : new Peer();
 
             peer.on('open', (id) => {
                 document.getElementById('my-id').innerText = id;
-                document.getElementById('chat-status').innerText = "System Synced";
-
-                if (!isAdmin) {
+                document.getElementById('chat-status').innerText = "LINK ESTABLISHED";
+                if(!isAdmin) {
                     const conn = peer.connect(ADMIN_PEER_ID);
-                    handleConnection(conn);
+                    setupConn(conn);
                 }
             });
 
             peer.on('connection', (conn) => {
-                handleConnection(conn);
-            });
-
-            peer.on('error', (err) => {
-                console.error(err);
-                if (err.type === 'unavailable-id' && isAdmin) {
-                    addSystemMessage("Admin session already active elsewhere.");
-                }
+                setupConn(conn);
             });
         }
 
-        function handleConnection(conn) {
-            conn.on('data', (data) => {
-                if (data.type === 'chat') {
-                    displayMessage(isAdmin ? conn.peer : 'MONARCH', data.msg, isAdmin ? 'buyer' : 'admin');
-                }
-            });
-
+        function setupConn(conn) {
             conn.on('open', () => {
                 connections[conn.peer] = conn;
-                if (isAdmin) {
-                    registerBuyer(conn.peer);
-                    addSystemMessage(`New Shadow Connected: ${conn.peer}`);
-                    conn.send({ type: 'chat', msg: "Welcome to the Shadow Market. State your request." });
-                } else {
-                    addSystemMessage("Link established with the Shadow Monarch.");
+                if(isAdmin) registerBuyer(conn.peer);
+                addSystemMessage(`Node ${conn.peer} integrated.`);
+                notify("New connection detected.");
+            });
+
+            conn.on('data', (data) => {
+                if(data.type === 'chat') {
+                    displayMessage(isAdmin ? conn.peer : 'MONARCH', data.msg, isAdmin ? 'buyer' : 'admin');
                 }
             });
         }
 
         function registerBuyer(id) {
-            if (document.getElementById(`buyer-${id}`)) return;
-            const div = document.createElement('button');
-            div.id = `buyer-${id}`;
-            div.className = 'w-full bg-white/5 p-3 rounded border border-white/10 hover:border-mana-blue text-left text-xs font-mono transition-all';
-            div.innerText = id;
-            div.onclick = () => selectBuyer(id);
-            activeBuyers.appendChild(div);
-        }
-
-        let selectedBuyerId = null;
-
-        function selectBuyer(id) {
-            selectedBuyerId = id;
-            document.querySelectorAll('#active-buyers button').forEach(b => b.classList.remove('border-mana-blue', 'bg-mana-blue/10'));
-            document.getElementById(`buyer-${id}`).classList.add('border-mana-blue', 'bg-mana-blue/10');
-            addSystemMessage(`Command Channel established with ${id}`);
+            if(document.getElementById(`buyer-${id}`)) return;
+            const btn = document.createElement('button');
+            btn.id = `buyer-${id}`;
+            btn.className = "w-full text-left p-3 glass border-white/5 rounded-lg text-[10px] font-mono transition-all hover:border-mana-blue";
+            btn.innerText = `NODE: ${id.substring(0, 15)}...`;
+            btn.onclick = () => {
+                selectedBuyerId = id;
+                document.querySelectorAll('#active-buyers button').forEach(b => b.classList.remove('border-mana-blue'));
+                btn.classList.add('border-mana-blue');
+                notify(`Channeling Node: ${id}`);
+            };
+            document.getElementById('active-buyers').appendChild(btn);
         }
 
         function sendMessage() {
             const input = document.getElementById('chat-input');
             const msg = input.value;
-            if (!msg) return;
+            if(!msg) return;
 
-            if (isAdmin) {
-                if (selectedBuyerId && connections[selectedBuyerId]) {
-                    connections[selectedBuyerId].send({ type: 'chat', msg: msg });
+            if(isAdmin) {
+                if(selectedBuyerId && connections[selectedBuyerId]) {
+                    connections[selectedBuyerId].send({ type: 'chat', msg });
                     displayMessage('YOU', msg, 'admin');
                 } else {
-                    Object.values(connections).forEach(conn => {
-                        conn.send({ type: 'chat', msg: msg });
-                    });
+                    Object.values(connections).forEach(c => c.send({ type: 'chat', msg }));
                     displayMessage('BROADCAST', msg, 'admin');
                 }
             } else {
-                if (connections[ADMIN_PEER_ID]) {
-                    connections[ADMIN_PEER_ID].send({ type: 'chat', msg: msg });
+                if(connections[ADMIN_PEER_ID]) {
+                    connections[ADMIN_PEER_ID].send({ type: 'chat', msg });
                     displayMessage('YOU', msg, 'buyer');
                 } else {
-                    addSystemMessage("Searching for the Monarch... (Admin offline)");
+                    notify("Monarch Offline. Link impossible.", "error");
                 }
             }
             input.value = '';
@@ -698,22 +952,48 @@
 
         function displayMessage(user, msg, type) {
             const div = document.createElement('div');
-            div.className = `p-3 rounded-lg max-w-[80%] ${type === 'admin' ? 'bg-mana-blue/20 border border-mana-blue/50 ml-auto' : 'bg-white/5 border border-white/10'}`;
+            div.className = `flex flex-col ${type === 'admin' ? 'items-end' : 'items-start'}`;
             div.innerHTML = `
-                <div class="text-[10px] uppercase font-black text-mana-blue mb-1">${user}</div>
-                <div class="text-sm">${msg}</div>
+                <span class="text-[8px] font-black uppercase text-gray-500 mb-1 px-2">${user}</span>
+                <div class="p-4 rounded-xl max-w-[80%] ${type === 'admin' ? 'bg-mana-blue/10 border border-mana-blue/30 text-mana-blue' : 'bg-white/5 border border-white/10 text-white shadow-xl'} text-sm leading-relaxed">
+                    ${msg}
+                </div>
             `;
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            const msgs = document.getElementById('chat-messages');
+            msgs.appendChild(div);
+            msgs.scrollTop = msgs.scrollHeight;
+            gsap.from(div, { y: 10, opacity: 0, duration: 0.3 });
         }
 
         function addSystemMessage(msg) {
             const div = document.createElement('div');
-            div.className = 'system-message text-xs font-bold uppercase tracking-widest text-mana-blue';
+            div.className = "system-message text-[10px] font-bold text-mana-blue/60 uppercase tracking-widest text-center py-2";
             div.innerText = `[SYSTEM]: ${msg}`;
-            chatMessages.appendChild(div);
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            document.getElementById('chat-messages').appendChild(div);
         }
+
+        function assignRank() {
+            let rank = localStorage.getItem('shadow-rank') || ['E', 'D', 'C', 'B', 'A', 'S'][Math.floor(Math.random()*6)];
+            localStorage.setItem('shadow-rank', rank);
+            document.getElementById('user-rank').innerText = rank;
+            if(rank === 'S') document.getElementById('user-rank').classList.add('mana-text-glow');
+        }
+
+        function showTooltip() { gsap.to('#wa-tooltip', { opacity: 1, x: 0, duration: 0.3 }); }
+        function hideTooltip() { gsap.to('#wa-tooltip', { opacity: 0, x: 10, duration: 0.3 }); }
+
+        // Start App
+        window.onload = () => {
+            initThree();
+            startAuthTimer();
+        };
+
+        document.getElementById('admin-code').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') checkAdmin();
+        });
+        document.getElementById('chat-input').addEventListener('keypress', (e) => {
+            if(e.key === 'Enter') sendMessage();
+        });
 
     </script>
 </body>
